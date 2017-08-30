@@ -1,0 +1,43 @@
+ -- User
+ --    ident Text
+ --    password Text Maybe
+ --    UniqueUser ident
+ --    deriving Typeable
+ --Email
+ --    email Text
+ --    userId UserId Maybe
+ --    verkey Text Maybe
+ --    UniqueEmail email
+ -- Comment json -- Adding "json" causes ToJSON and FromJSON instances to be derived.
+ --    message Text
+ --    userId UserId Maybe
+ --    deriving Eq
+ --    deriving Show
+
+ -- By default this file is used in Model.hs (which is imported by Foundation.hs)
+
+User
+  username Text 
+  UniqueUser username
+  dateCreated UTCTime
+Book
+  createdBy UserId
+  name Text
+  dateCreated UTCTime
+Account
+  name Text
+  dateCreated UTCTime
+  parent FolderAccountId Maybe
+  isCredit Bool
+FolderAccount
+  name Text
+  parent FolderAccountId Maybe
+  isCredit Bool
+Transaction
+  description Text
+  date UTCTime
+  createdBy UserId
+TransactionAccount
+  transaction TransactionId
+  account AccountId
+  amount Nano
