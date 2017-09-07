@@ -67,6 +67,7 @@ library
       Application
       Foundation
       Handler.Home
+      Handler.Common
       Import
       Import.NoFoundation
       Model

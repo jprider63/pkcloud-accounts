@@ -3,3 +3,5 @@
 
 / HomeR GET
 
+/favicon.ico FaviconR GET
+/robots.txt RobotsR GET

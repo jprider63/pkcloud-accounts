@@ -86,51 +86,51 @@ instance Yesod App where
     -- For details, see the CSRF documentation in the Yesod.Core.Handler module of the yesod-core package.
     yesodMiddleware = defaultYesodMiddleware
 
-    defaultLayout widget = do
-        master <- getYesod
-        mmsg <- getMessage
+    -- defaultLayout widget = do
+    --     master <- getYesod
+    --     mmsg <- getMessage
 
-        muser <- maybeAuthPair
-        mcurrentRoute <- getCurrentRoute
+    --     muser <- maybeAuthPair
+    --     mcurrentRoute <- getCurrentRoute
 
-        -- Get the breadcrumbs, as defined in the YesodBreadcrumbs instance.
-        (title, parents) <- breadcrumbs
+    --     -- Get the breadcrumbs, as defined in the YesodBreadcrumbs instance.
+    --     (title, parents) <- breadcrumbs
 
-        -- Define the menu items of the header.
-        let menuItems =
-                [ NavbarLeft $ MenuItem
-                    { menuItemLabel = "Home"
-                    , menuItemRoute = HomeR
-                    , menuItemAccessCallback = True
-                    }
-                , NavbarRight $ MenuItem
-                    { menuItemLabel = "Login"
-                    , menuItemRoute = AuthR LoginR
-                    , menuItemAccessCallback = isNothing muser
-                    }
-                , NavbarRight $ MenuItem
-                    { menuItemLabel = "Logout"
-                    , menuItemRoute = AuthR LogoutR
-                    , menuItemAccessCallback = isJust muser
-                    }
-                ]
+    --     -- Define the menu items of the header.
+    --     let menuItems =
+    --             [ NavbarLeft $ MenuItem
+    --                 { menuItemLabel = "Home"
+    --                 , menuItemRoute = HomeR
+    --                 , menuItemAccessCallback = True
+    --                 }
+    --             , NavbarRight $ MenuItem
+    --                 { menuItemLabel = "Login"
+    --                 , menuItemRoute = AuthR LoginR
+    --                 , menuItemAccessCallback = isNothing muser
+    --                 }
+    --             , NavbarRight $ MenuItem
+    --                 { menuItemLabel = "Logout"
+    --                 , menuItemRoute = AuthR LogoutR
+    --                 , menuItemAccessCallback = isJust muser
+    --                 }
+    --             ]
 
-        let navbarLeftMenuItems = [x | NavbarLeft x <- menuItems]
-        let navbarRightMenuItems = [x | NavbarRight x <- menuItems]
+    --     let navbarLeftMenuItems = [x | NavbarLeft x <- menuItems]
+    --     let navbarRightMenuItems = [x | NavbarRight x <- menuItems]
 
-        let navbarLeftFilteredMenuItems = [x | x <- navbarLeftMenuItems, menuItemAccessCallback x]
-        let navbarRightFilteredMenuItems = [x | x <- navbarRightMenuItems, menuItemAccessCallback x]
+    --     let navbarLeftFilteredMenuItems = [x | x <- navbarLeftMenuItems, menuItemAccessCallback x]
+    --     let navbarRightFilteredMenuItems = [x | x <- navbarRightMenuItems, menuItemAccessCallback x]
 
-        -- We break up the default layout into two components:
-        -- default-layout is the contents of the body tag, and
-        -- default-layout-wrapper is the entire page. Since the final
-        -- value passed to hamletToRepHtml cannot be a widget, this allows
-        -- you to use normal widget features in default-layout.
+    --     -- We break up the default layout into two components:
+    --     -- default-layout is the contents of the body tag, and
+    --     -- default-layout-wrapper is the entire page. Since the final
+    --     -- value passed to hamletToRepHtml cannot be a widget, this allows
+    --     -- you to use normal widget features in default-layout.
 
-        pc <- widgetToPageContent $ do
-            addStylesheet $ StaticR css_bootstrap_css
-            $(widgetFile "default-layout")
-        withUrlRenderer $(hamletFile "templates/default-layout-wrapper.hamlet")
+    --     pc <- widgetToPageContent $ do
+    --         addStylesheet $ StaticR css_bootstrap_css
+    --         $(widgetFile "default-layout")
+    --     withUrlRenderer $(hamletFile "templates/default-layout-wrapper.hamlet")
 
     -- The page to be redirected to when authentication is required.
     authRoute _ = Just $ AuthR LoginR
@@ -139,6 +139,8 @@ instance Yesod App where
     isAuthorized (AuthR _) _ = return Authorized
     isAuthorized HomeR _ = return Authorized
     isAuthorized (StaticR _) _ = return Authorized
+    isAuthorized FaviconR _ = return Authorized
+    isAuthorized RobotsR _ = return Authorized
 
 
     -- This function creates static content files in the static folder
