@@ -68,6 +68,7 @@ library
       Foundation
       Handler.Home
       Handler.Common
+      Handler.Book
       Import
       Import.NoFoundation
       Model

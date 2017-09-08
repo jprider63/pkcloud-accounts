@@ -67,6 +67,8 @@ instance Yesod App where
     isAuthorized FaviconR _ = return Authorized
     isAuthorized RobotsR _ = return Authorized
 
+    isAuthorized BookR _ = isAuthenticated
+
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows
     -- expiration dates to be set far in the future without worry of
@@ -116,7 +118,7 @@ instance YesodAuth App where
     -- Where to send a user after successful login
     loginDest _ = HomeR
     -- Where to send a user after logout
-    logoutDest _ = HomeR
+    logoutDest _ = AuthR LogoutR
     -- Override the above two destinations when a Referer: header is present
     redirectToReferer _ = True
 
@@ -125,14 +127,14 @@ instance YesodAuth App where
         case x of
             Just (Entity uid _) -> return $ Authenticated uid
             Nothing -> do
-                 now <- lift ( lift getCurrentTime )              
+                 now <- lift ( lift getCurrentTime )
                  Authenticated <$> insert User
                     { userUsername = credsIdent creds
                     , userDateCreated = now
                     }
 
     -- You can add other plugins like Google Email, email or OAuth here
-    authPlugins app = [authDummy | appAuthDummyLogin $ appSettings app]
+    authPlugins app = [authDummy]
 
     authHttpManager = getHttpManager
 

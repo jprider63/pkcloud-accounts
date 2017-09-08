@@ -17,10 +17,10 @@
  -- By default this file is used in Model.hs (which is imported by Foundation.hs)
 
 User
-  username Text 
+  username Text
   UniqueUser username
   dateCreated UTCTime
-Book
+Book json
   createdBy UserId
   name Text
   dateCreated UTCTime

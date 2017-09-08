@@ -20,6 +20,7 @@ getHomeR = do
             ^{navbar}
             <div .page-header>
                 <h1>Welcome to PKCloud Accounts
+            ^{books}
         |]
 
 alert :: Widget
@@ -47,3 +48,51 @@ navbar = do
                 <li>
                     <a href=@{AuthR LogoutR}>Logout
 |]
+
+books :: Widget
+books = do
+    [whamlet|
+    <div .bs-docs-section>
+        <div .row>
+            <div .col-lg-12>
+                <h2 #books>Books
+            <div .col-lg-6>
+                <div .bs-callout.bs-callout-info.well>
+                    <ul #js-bookList>
+                    <form #js-bookForm>
+                        <div .field>
+                            <input #js-bookName placeholder="New book name..." required>
+                            <button .btn.btn-primary.btn-sm type=submit>Create book
+    |]
+    toWidget [julius|
+        $("#js-bookForm").submit(function(event) {
+            event.preventDefault();
+
+            var name = $("#js-bookName").val();
+            if (!name) {
+                alert("Please enter a book name");
+                return;
+            }
+
+            $.ajax({
+                url: '@{BookR}',
+                type: 'POST',
+                contentType: "application/json",
+                data: JSON.stringify({
+                  name: name,
+                  createdBy: 1,                 // Dummy values for FromJson
+                  dateCreated: new Date()       // Is there another way?
+                }),
+                success: function (data) {
+                    console.log(data);
+                  var newNode = $("<li></li>");
+                  newNode.text(data.name);
+                  console.log(data);
+                  $("#js-bookList").append(newNode);
+                },
+                error: function (data) {
+                  console.log("Error creating book: " + JSON.stringify(data));
+                },
+            });
+        });
+    |]

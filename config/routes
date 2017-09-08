@@ -3,5 +3,7 @@
 
 / HomeR GET
 
+/book BookR POST
+
 /favicon.ico FaviconR GET
 /robots.txt RobotsR GET
