@@ -9,9 +9,21 @@ module Handler.Home where
 import Import
 
 getHomeR :: Handler Html
-getHomeR = defaultLayout $ do
-        setTitle "Welcome To Yesod!"
+getHomeR = do
+    maybeUserId <- maybeAuthId
+    defaultLayout $ do
+        addStylesheet $ StaticR css_bootstrap_css
+        setTitle "PKCloud Accounts"
         [whamlet|
-           Hello World
+            <nav .navbar .navbar-default>
+                <div .container>
+                    <div .navbar-header>
+                        <a .navbar-brand href=@{HomeR}>Home
+                    <ul .nav .navbar-nav .navbar-right>
+                        <li>
+                            $maybe _ <- maybeUserId
+                                <a href=@{AuthR LogoutR}>Logout
+                            $nothing
+                                <a href=@{AuthR LoginR}>Login
         |]
 

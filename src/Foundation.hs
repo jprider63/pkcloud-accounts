@@ -9,18 +9,15 @@ module Foundation where
 
 import Import.NoFoundation
 import Database.Persist.Sql (ConnectionPool, runSqlPool)
-import Text.Hamlet          (hamletFile)
 import Text.Jasmine         (minifym)
 
 -- Used only when in "auth-dummy-login" setting is enabled.
 import Yesod.Auth.Dummy
 
-import Yesod.Auth.OpenId    (authOpenId, IdentifierType (Claimed))
+-- import Yesod.Auth.OpenId    (authOpenId, IdentifierType (Claimed))
 import Yesod.Default.Util   (addStaticContentExternal)
 import Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
-import qualified Data.CaseInsensitive as CI
-import qualified Data.Text.Encoding as TE
 
 data App = App
     { appSettings    :: AppSettings
@@ -135,9 +132,7 @@ instance YesodAuth App where
                     }
 
     -- You can add other plugins like Google Email, email or OAuth here
-    authPlugins app = [authOpenId Claimed []] ++ extraAuthPlugins
-        -- Enable authDummy login if enabled.
-        where extraAuthPlugins = [authDummy | appAuthDummyLogin $ appSettings app]
+    authPlugins app = [authDummy | appAuthDummyLogin $ appSettings app]
 
     authHttpManager = getHttpManager
 
