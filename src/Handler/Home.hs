@@ -10,7 +10,7 @@ import Import
 
 getHomeR :: Handler Html
 getHomeR = do
-    _ <- requireAuth
+    userId <- requireAuthId
     defaultLayout $ do
         addStylesheet $ StaticR css_bootstrap_css
         addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
@@ -20,7 +20,7 @@ getHomeR = do
             ^{navbar}
             <div .page-header>
                 <h1>Welcome to PKCloud Accounts
-            ^{books}
+            ^{books userId}
         |]
 
 alert :: Widget
@@ -49,8 +49,9 @@ navbar = do
                     <a href=@{AuthR LogoutR}>Logout
 |]
 
-books :: Widget
-books = do
+books :: UserId -> Widget 
+books userId = do
+    userBooks <- handlerToWidget $ runDB $ selectList [BookCreatedBy ==. userId] []
     [whamlet|
     <div .bs-docs-section>
         <div .row>
@@ -59,6 +60,8 @@ books = do
             <div .col-lg-6>
                 <div .bs-callout.bs-callout-info.well>
                     <ul #js-bookList>
+                        $forall book <- userBooks
+                            <li>#{bookName $ entityVal book}
                     <form #js-bookForm>
                         <div .field>
                             <input #js-bookName placeholder="New book name..." required>
