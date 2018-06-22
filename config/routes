@@ -3,7 +3,8 @@
 
 / HomeR GET
 
-/book BookR POST
+/book/#BookId BookR GET
+/books/create BookCreateR POST
 
 /favicon.ico FaviconR GET
 /robots.txt RobotsR GET

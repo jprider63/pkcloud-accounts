@@ -61,7 +61,9 @@ books userId = do
                 <div .bs-callout.bs-callout-info.well>
                     <ul #js-bookList>
                         $forall book <- userBooks
-                            <li>#{bookName $ entityVal book}
+                            <li>
+                                <a href="@{BookR $ entityKey book}">
+                                    #{bookName $ entityVal book}
                     <form #js-bookForm>
                         <div .field>
                             <input #js-bookName placeholder="New book name..." required>
@@ -78,7 +80,7 @@ books userId = do
             }
 
             $.ajax({
-                url: '@{BookR}',
+                url: '@{BookCreateR}',
                 type: 'POST',
                 contentType: "application/json",
                 data: JSON.stringify({

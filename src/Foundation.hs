@@ -67,7 +67,8 @@ instance Yesod App where
     isAuthorized FaviconR _ = return Authorized
     isAuthorized RobotsR _ = return Authorized
 
-    isAuthorized BookR _ = isAuthenticated
+    isAuthorized BookCreateR _ = isAuthenticated
+    isAuthorized _ _ = return Authorized
 
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows
