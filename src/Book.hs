@@ -19,4 +19,16 @@ layout w bookId = do
 
     defaultLayout $ w $ Entity bookId book
 
+data AccountTree = 
+      FolderNode (Entity FolderAccount) [AccountTree]
+    | AccountLeaf (Entity Account)
 
+accountTrees :: BookId -> Handler [AccountTree]
+accountTrees bookId = runDB $ do
+    -- Get book folders.
+    bookFolders <- selectList [BookFolderAccountBook ==. bookId] [Asc BookFolderAccountId]
+
+    -- Get each folder's tree.
+    mapM (accountTree . folderBookFolderAccount . entityVal) bookFolders
+
+folderAccountTree :: FolderAccountId -> DB AccountTree

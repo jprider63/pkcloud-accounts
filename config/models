@@ -20,23 +20,34 @@ User
   username Text
   UniqueUser username
   dateCreated UTCTime
+
 Book json
   createdBy UserId
   name Text
   dateCreated UTCTime
+
 Account
   name Text
   dateCreated UTCTime
   parent FolderAccountId Maybe
   isCredit Bool
+
+BookFolderAccount
+  book BookId
+  folder FolderAccountId
+  UniqueBookFolder book folder
+
 FolderAccount
   name Text
   parent FolderAccountId Maybe
   isCredit Bool
+
 Transaction
   description Text
   date UTCTime
   createdBy UserId
+  -- TODO: Add a PeriodId reference? XXX
+
 TransactionAccount
   transaction TransactionId
   account AccountId
