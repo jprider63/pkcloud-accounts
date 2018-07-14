@@ -6,7 +6,7 @@ import Import
 canViewBook :: UserId -> Book -> Bool
 canViewBook uId book = bookCreatedBy book == uId
 
-layout :: (Book -> Text) -> (Entity Book -> Widget) -> BookId -> Handler Html
+layout :: (Book -> Text) -> (Entity Book -> [AccountTree] -> Widget) -> BookId -> Handler Html
 layout titleF w bookId = do
     -- Check if user is authenticated.
     uId <- requireAuthId
@@ -31,7 +31,7 @@ layout titleF w bookId = do
                     <div .col-xs-3>
                         ^{sidebarW accountTree}
                     <div .col-xs-9>
-                        ^{w $ Entity bookId book}
+                        ^{w (Entity bookId book) accountTree}
         |]
 
     where

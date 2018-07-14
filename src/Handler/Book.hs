@@ -32,10 +32,8 @@ postBookCreateR = do
 
 --JP: Change BookId to a unique BookUrl?
 getBookR :: BookId -> Handler Html
-getBookR = Book.layout (const "Overview") $ \(Entity bookId book) -> do
+getBookR = Book.layout (const "Overview") $ \(Entity bookId book) accountTree -> do
     setTitle $ toHtml $ bookName book
-
-    accountTree <- handlerToWidget $ Book.accountTrees bookId
 
     [whamlet|
         <div>
@@ -45,20 +43,50 @@ getBookR = Book.layout (const "Overview") $ \(Entity bookId book) -> do
         <h2>
             Featured Accounts
         <div>
-            <ul>
-                ^{concatMap displayAccountTree accountTree}
+            ^{filteredW accountTree}
         <h2>
             Recent Transactions
     |]
 
     where
-        displayAccountTree (Book.FolderNode (Entity folderId folder) _ children) = [whamlet|
+        filteredW :: [Book.AccountTree] -> Widget
+        filteredW tree =
+            case filterFeatured tree of
+                Nothing ->
+                    [whamlet|
+                        No featured accounts.
+                    |]
+                Just tree -> 
+                    [whamlet|
+                        <ul>
+                            ^{concatMap displayFeatured tree}
+                    |]
+
+            
+        -- Filter out unfeatured accounts.
+        filterFeatured node@(Book.FolderNode _ _ children) = 
+            case catMaybes $ map filterFeatured children of
+                [] ->
+                    Nothing
+                children' -> 
+                    Just (node {Book.folderNodeChildren = children'})
+
+        filterFeatured leaf@(Book.AccountLeaf (Entity _ account) _) = 
+            if accountFeatured account then
+                Just leaf
+            else
+                Nothing
+
+        displayFeatured (Book.FolderNode (Entity folderId folder) balance children) = [whamlet|
             <li>
-                #{folderAccountName folder}
+                #{folderAccountName folder} - #{dollar balance}
                 <ul>
-                    ^{concatMap displayAccountTree children}
+                    ^{concatMap displayFeatured children}
         |]
-        displayAccountTree (Book.AccountLeaf (Entity accountId account) _) = [whamlet|
-            <li>
-                #{accountName account}
-        |]
+
+        displayFeatured (Book.AccountLeaf (Entity accountId account) balance) = 
+            [whamlet|
+                <li>
+                    #{accountName account} - #{dollar balance}
+            |]
+
