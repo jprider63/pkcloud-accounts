@@ -98,6 +98,25 @@ instance Yesod App where
 
     makeLogger = return . appLogger
 
+    defaultLayout w = do
+        p <- widgetToPageContent $ do
+            addStylesheet $ StaticR css_bootstrap_css
+            addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
+            w
+        msgs <- getMessages
+        withUrlRenderer [hamlet|
+            $newline never
+            $doctype 5
+            <html>
+                <head>
+                    <title>#{pageTitle p}
+                    ^{pageHead p}
+                <body>
+                    $forall (status, msg) <- msgs
+                        <p class="message #{status}">#{msg}
+                    ^{pageBody p}
+            |]
+
 -- Define breadcrumbs.
 instance YesodBreadcrumbs App where
   breadcrumb HomeR = return ("Home", Nothing)

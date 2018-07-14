@@ -32,27 +32,33 @@ postBookCreateR = do
 
 --JP: Change BookId to a unique BookUrl?
 getBookR :: BookId -> Handler Html
-getBookR = Book.layout $ \(Entity bookId book) -> do
+getBookR = Book.layout (const "Overview") $ \(Entity bookId book) -> do
     setTitle $ toHtml $ bookName book
 
     accountTree <- handlerToWidget $ Book.accountTrees bookId
 
     [whamlet|
-        <h1>
-            #{bookName book}
+        <div>
+            <a .btn .btn-primary href="#" .pull-right>
+                New Transaction
+        <div .clearfix>
+        <h2>
+            Featured Accounts
         <div>
             <ul>
                 ^{concatMap displayAccountTree accountTree}
+        <h2>
+            Recent Transactions
     |]
 
     where
-        displayAccountTree (Book.FolderNode (Entity folderId folder) children) = [whamlet|
+        displayAccountTree (Book.FolderNode (Entity folderId folder) _ children) = [whamlet|
             <li>
                 #{folderAccountName folder}
                 <ul>
                     ^{concatMap displayAccountTree children}
         |]
-        displayAccountTree (Book.AccountLeaf (Entity accountId account)) = [whamlet|
+        displayAccountTree (Book.AccountLeaf (Entity accountId account) _) = [whamlet|
             <li>
                 #{accountName account}
         |]
