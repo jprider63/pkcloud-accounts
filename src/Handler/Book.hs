@@ -34,7 +34,25 @@ postBookCreateR = do
 getBookR :: BookId -> Handler Html
 getBookR = Book.layout $ \(Entity bookId book) -> do
     setTitle $ toHtml $ bookName book
+
+    accountTree <- handlerToWidget $ Book.accountTrees bookId
+
     [whamlet|
         <h1>
             #{bookName book}
+        <div>
+            <ul>
+                ^{concatMap displayAccountTree accountTree}
     |]
+
+    where
+        displayAccountTree (Book.FolderNode (Entity folderId folder) children) = [whamlet|
+            <li>
+                #{folderAccountName folder}
+                <ul>
+                    ^{concatMap displayAccountTree children}
+        |]
+        displayAccountTree (Book.AccountLeaf (Entity accountId account)) = [whamlet|
+            <li>
+                #{accountName account}
+        |]
