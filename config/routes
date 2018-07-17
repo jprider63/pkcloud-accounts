@@ -4,7 +4,9 @@
 / HomeR GET
 
 /book/#BookId BookR GET
-/books/create BookCreateR POST
+/books/new BookCreateR POST
+
+/book/#BookId/accounts/new AccountCreateR GET POST
 
 /favicon.ico FaviconR GET
 /robots.txt RobotsR GET

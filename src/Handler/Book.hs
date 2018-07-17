@@ -51,12 +51,12 @@ getBookR = Book.layout (const "Overview") $ \(Entity bookId book) accountTree ->
     where
         filteredW :: [Book.AccountTree] -> Widget
         filteredW tree =
-            case filterFeatured tree of
-                Nothing ->
+            case catMaybes $ map filterFeatured tree of
+                [] ->
                     [whamlet|
                         No featured accounts.
                     |]
-                Just tree -> 
+                tree -> 
                     [whamlet|
                         <ul>
                             ^{concatMap displayFeatured tree}
@@ -64,6 +64,7 @@ getBookR = Book.layout (const "Overview") $ \(Entity bookId book) accountTree ->
 
             
         -- Filter out unfeatured accounts.
+        filterFeatured :: Book.AccountTree -> Maybe Book.AccountTree
         filterFeatured node@(Book.FolderNode _ _ children) = 
             case catMaybes $ map filterFeatured children of
                 [] ->

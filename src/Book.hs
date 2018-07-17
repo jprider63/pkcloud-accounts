@@ -3,6 +3,11 @@ module Book where
 import qualified Database.Esqueleto as E
 import Import
 
+requireCanWriteBook book = do
+    uId <- requireAuthId
+    when (bookCreatedBy book /= uId) $ 
+        permissionDenied ""
+
 canViewBook :: UserId -> Book -> Bool
 canViewBook uId book = bookCreatedBy book == uId
 
@@ -39,11 +44,11 @@ layout titleF w bookId = do
         sidebarW trees = [whamlet|
             <div .sidebar>
                 <h2>
-                    <a href="#">
+                    <a href="@{BookR bookId}">
                         Overview
                 <h2>
                     Accounts
-                <a href="#" .btn .pull-right>
+                <a href="@{AccountCreateR bookId}" .btn .pull-right>
                     New Account
                 ^{concatMap sidebarAccountTree trees}
         |]
@@ -91,7 +96,7 @@ folderAccountTree folderE@(Entity fId _) = do
     folders <- mapM folderAccountTree folders'
 
     -- Get child accounts.
-    accounts' <- selectList [AccountParent ==. Just fId] []
+    accounts' <- selectList [AccountParent ==. fId] []
     accounts <- mapM accountLeaf accounts'
     
     let balance = sum $ map accountLeafBalance accounts ++ map folderNodeBalance folders

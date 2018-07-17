@@ -29,7 +29,7 @@ Book json
 Account
   name Text
   dateCreated UTCTime
-  parent FolderAccountId Maybe
+  parent FolderAccountId
   isCredit Bool
   featured Bool
 
@@ -41,7 +41,7 @@ BookFolderAccount
 FolderAccount
   name Text
   parent FolderAccountId Maybe
-  isCredit Bool
+  isCredit Bool -- JP: Move this to BookFolderAccount?
 
 Transaction
   description Text
