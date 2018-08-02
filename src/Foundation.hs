@@ -101,7 +101,8 @@ instance Yesod App where
     defaultLayout w = do
         p <- widgetToPageContent $ do
             addStylesheet $ StaticR css_bootstrap_css
-            addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
+            addScript $ StaticR js_jquery_js
+            addScript $ StaticR js_bootstrap_js
             w
         msgs <- getMessages
         withUrlRenderer [hamlet|

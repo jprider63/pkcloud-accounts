@@ -41,7 +41,6 @@ eitherField (t1, s1, f1) (t2, s2, f2) = Field parse view UrlEncoded
 
             toWidget [julius|
                 $('input[type=radio][data-toggle=collapse]').on( 'change', function() {
-                    debugger;
                     // Check that radio is selected.
                     if ( !this.checked)
                         return;
@@ -128,10 +127,10 @@ eitherField (t1, s1, f1) (t2, s2, f2) = Field parse view UrlEncoded
                             <label>
                                 <input type="radio" name="#{name}" id="#{cssId}-right" value="right" *{attrs} data-toggle="collapse" data-parent="#{cssId}" data-target="#{leftTarget}" :leftSelected res:checked :required:required>
                                 #{t2}
-                    <div id="#{leftTarget}" .form-group>
+                    <div id="#{leftTarget}" .form-group data-required="#{leftId}">
                         <label for="#{leftId}">#{fromMessage site langs s1}
                         ^{toView f1 s1 leftId leftName leftR required}
-                    <div id="#{rightTarget}" .form-group>
+                    <div id="#{rightTarget}" .form-group data-required="#{rightId}">
                         <label for="#{rightId}">#{fromMessage site langs s2}
                         ^{toView f2 s2 rightId rightName rightR required}
             |]
