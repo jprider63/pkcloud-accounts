@@ -19,13 +19,14 @@ eitherField (t1, s1, f1) (t2, s2, f2) = Field parse view UrlEncoded
     where
         parse _ _ = undefined
         view cssId name attrs res required = do
-            -- accordion <- handlerToWidget newIdent
             langs <- languages
             site <- getYesod
-            let leftId = maybe (cssId <> "-left-target") id $ fsId s1
-            let rightId = maybe (cssId <> "-right-target") id $ fsId s2
-            let leftName = maybe (name <> "-left-target") id $ fsName s1
-            let rightName = maybe (name <> "-right-target") id $ fsName s2
+            let leftTarget = cssId <> "-left-target"
+            let rightTarget = cssId <> "-right-target"
+            let leftId = maybe (cssId <> "-left-field") id $ fsId s1
+            let rightId = maybe (cssId <> "-right-field") id $ fsId s2
+            let leftName = maybe (name <> "-left-field") id $ fsName s1
+            let rightName = maybe (name <> "-right-field") id $ fsName s2
             -- let (leftReq, rightReq) = case res of
             --       Left err -> (required, False)
             --       (Right (Left _)) -> (required, False)
@@ -37,22 +38,102 @@ eitherField (t1, s1, f1) (t2, s2, f2) = Field parse view UrlEncoded
                     Left err -> (Left err, Left err)
                     (Right (Left l)) -> (Right l, d)
                     (Right (Right r)) -> (d, Right r)
+
+            toWidget [julius|
+                $('input[type=radio][data-toggle=collapse]').on( 'change', function() {
+                    debugger;
+                    // Check that radio is selected.
+                    if ( !this.checked)
+                        return;
+
+                    // Get target.
+                    var targetId = this.getAttribute('data-target');
+
+                    if ( !targetId) {
+                        console.error("Attribute 'data-target' not defined");
+                        return;
+                    }
+                    var target = $('#'+targetId);
+
+                    // Get parent.
+                    var parentId = this.getAttribute('data-parent');
+                    if ( !parentId) {
+                        console.error("Attribute 'data-parent' not defined");
+                        return;
+                    }
+                    var parent = $('#'+parentId);
+
+                    // Iterate over children.
+                    parent.children().each( function ( _, child) {
+                        var c = $( child);
+
+                        // Skip if controller.
+                        if ( c.hasClass("controller"))
+                            return;
+
+                        // Expand if target.
+                        if ( c.attr('id') === targetId) {
+                            c.collapse('show');
+
+                            // If required, set required.
+                            if ( #{required}) {
+                                // Get data-required.
+                                var requiredId = child.getAttribute('data-required');
+                                if ( !requiredId) {
+                                    console.error("Attribute 'data-required' not defined");
+                                    return;
+                                }
+
+                                // Set required to true.
+                                var required = $('#'+requiredId);
+                                required.prop( 'required', true);
+                            }
+                        }
+                        // Hide otherwise.
+                        else {
+                            // Hide if visible.
+                            if ( c.hasClass("in")) {
+                                c.collapse('hide');
+                            }
+                            // Otherwise set toggle to false.
+                            else {
+                                c.collapse({ 'toggle': false});
+                            }
+
+                            // If required, unset required.
+                            if ( #{required}) {
+                                // Get data-required.
+                                var requiredId = child.getAttribute('data-required');
+                                if ( !requiredId) {
+                                    console.error("Attribute 'data-required' not defined");
+                                    return;
+                                }
+
+                                // Set required to false.
+                                var required = $('#'+requiredId);
+                                required.prop( 'required', false);
+                            }
+                        }
+                    });
+                });
+            |]
             [whamlet|
-                <div id="#{cssId}" .form-group>
-                    <div class="radio">
-                        <label>
-                            <input type="radio" name="#{name}" id="#{cssId}-left" value="left" *{attrs} data-toggle="collapse" data-parent="#{cssId}" data-target="#{leftId}" :leftSelected res:checked :required:required>
-                            #{t1}
-                    <div class="radio">
-                        <label>
-                            <input type="radio" name="#{name}" id="#{cssId}-right" value="right" *{attrs} data-toggle="collapse" data-parent="#{cssId}" data-target="#{cssId}-right" :leftSelected res:checked :required:required>
-                            #{t2}
-                <div .form-group>
-                    <label for="#{leftId}">#{fromMessage site langs s1}
-                    ^{toView f1 s1 leftId leftName leftR required}
-                <div .form-group>
-                    <label for="#{rightId}">#{fromMessage site langs s2}
-                    ^{toView f2 s2 rightId rightName rightR required}
+                <div id="#{cssId}">
+                    <div .controller .form-group>
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="#{name}" id="#{cssId}-left" value="left" *{attrs} data-toggle="collapse" data-parent="#{cssId}" data-target="#{leftTarget}" :leftSelected res:checked :required:required>
+                                #{t1}
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="#{name}" id="#{cssId}-right" value="right" *{attrs} data-toggle="collapse" data-parent="#{cssId}" data-target="#{leftTarget}" :leftSelected res:checked :required:required>
+                                #{t2}
+                    <div id="#{leftTarget}" .form-group>
+                        <label for="#{leftId}">#{fromMessage site langs s1}
+                        ^{toView f1 s1 leftId leftName leftR required}
+                    <div id="#{rightTarget}" .form-group>
+                        <label for="#{rightId}">#{fromMessage site langs s2}
+                        ^{toView f2 s2 rightId rightName rightR required}
             |]
 
         fromMessage site langs fs = renderMessage site langs $ fsLabel fs

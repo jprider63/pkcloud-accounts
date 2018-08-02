@@ -33,9 +33,8 @@ generateHTML bookId trees formM = do
         <form method=post action=@{AccountCreateR bookId} enctype=#{enctype}>
             ^{formW}
             <div .form-group>
-                <div class="col-xs-12">
-                    <button type="submit" class="btn btn-default">
-                        Create Account
+                <button type="submit" class="btn btn-default">
+                    Create Account
     |]
 
 getAccountCreateR :: BookId -> Handler Html
