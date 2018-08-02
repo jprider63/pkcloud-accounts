@@ -25,23 +25,23 @@ Book json
   createdBy UserId
   name Text
   dateCreated UTCTime
+  -- UniqueBook createdBy name
 
 Account
   name Text
   dateCreated UTCTime
   parent FolderAccountId
-  isCredit Bool
   featured Bool
 
 BookFolderAccount
   book BookId
   folder FolderAccountId
+  isDebit Bool
   UniqueBookFolder book folder
 
 FolderAccount
   name Text
   parent FolderAccountId Maybe
-  isCredit Bool -- JP: Move this to BookFolderAccount?
 
 Transaction
   description Text

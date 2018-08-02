@@ -17,14 +17,14 @@ postBookCreateR = do
         insertedBook@(Entity bId _) <- insertEntity book'
 
         -- Insert default accounts.
-        assetsId <- insert $ FolderAccount "Assets" Nothing False
-        insert_ $ BookFolderAccount bId assetsId
+        assetsId <- insert $ FolderAccount "Assets" Nothing
+        insert_ $ BookFolderAccount bId assetsId True
 
-        liabilitiesId <- insert $ FolderAccount "Liabilities" Nothing True
-        insert_ $ BookFolderAccount bId liabilitiesId
+        liabilitiesId <- insert $ FolderAccount "Liabilities" Nothing
+        insert_ $ BookFolderAccount bId liabilitiesId False
 
-        equityId <- insert $ FolderAccount "Equity" Nothing True
-        insert_ $ BookFolderAccount bId equityId
+        equityId <- insert $ FolderAccount "Equity" Nothing
+        insert_ $ BookFolderAccount bId equityId False
 
         return insertedBook
 

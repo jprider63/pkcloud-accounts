@@ -1,6 +1,7 @@
 module Handler.Account.Create where
 
 import qualified Book
+import qualified Folder
 import Import
 
 data FormData = FormData {
@@ -19,14 +20,7 @@ renderForm trees = renderBootstrap3 BootstrapBasicForm $ FormData
         parentSettings = bfs ("Folder" :: Text)
         featuredSettings = bfs ("Featured" :: Text)
 
-        folders = optionsPairs $ concatMap (toFolders "") trees
-
-        toFolders spacing (Book.FolderNode (Entity folderId folder) _ children) = 
-            let spacing' = spacingChar <> spacing in
-            (spacing <> folderAccountName folder, folderId):(concatMap (toFolders spacing') children)
-        toFolders _ (Book.AccountLeaf _ _) = []
-
-        spacingChar = "-"
+        folders = Folder.treesToFolders trees
 
 generateHTML :: BookId -> [Book.AccountTree] -> Maybe (Widget, Enctype) -> Widget
 generateHTML bookId trees formM = do
@@ -62,12 +56,9 @@ postAccountCreateR = Book.layout (const "New Account") $ \(Entity bookId book) a
             pkcloudSetMessageDanger "Creating account failed."
             generateHTML bookId accountTree $ Just (formW, formE)
         FormSuccess (FormData account parentId featured) -> do
-            -- Get whether account is credit.
-            isCredit <- folderAccountIsCredit <$> (handlerToWidget $ runDB $ get404 parentId)
-
             -- Insert account.
             now <- liftIO getCurrentTime
-            handlerToWidget $ runDB $ insert_ $ Account account now parentId isCredit featured
+            handlerToWidget $ runDB $ insert_ $ Account account now parentId featured -- TODO: Check if insert failed. XXX
 
             -- Set message.
             pkcloudSetMessageSuccess "Successfully created account!"

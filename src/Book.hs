@@ -50,6 +50,8 @@ layout titleF w bookId = do
                     Accounts
                 <a href="@{AccountCreateR bookId}" .btn .pull-right>
                     New Account
+                <a href="@{FolderCreateR bookId}" .btn .pull-right>
+                    New Folder
                 ^{concatMap sidebarAccountTree trees}
         |]
 

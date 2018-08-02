@@ -22,6 +22,7 @@ library
       src
   build-depends:
       base >=4.8.2.0 && <4.9 || >=4.9.1.0 && <5
+    , blaze-markup
     , classy-prelude-yesod >=0.10.2 && <1.0 || >=1.1
     , yesod >=1.4.3 && <1.5
     , yesod-core >=1.4.30 && <1.5
@@ -67,18 +68,20 @@ library
   exposed-modules:
       Application
       Book
+      Folder
       Foundation
       Handler.Account.Create
-      Handler.Home
-      Handler.Common
       Handler.Book
+      Handler.Common
+      Handler.Folder.Create
+      Handler.Home
       Import
       Import.NoFoundation
       Model
       Settings
       Settings.StaticFiles
   default-language: Haskell2010
-  extensions: NoImplicitPrelude, ViewPatterns, OverloadedStrings, TemplateHaskell, QuasiQuotes, TypeFamilies, MultiParamTypeClasses, FlexibleContexts
+  extensions: NoImplicitPrelude, ViewPatterns, OverloadedStrings, TemplateHaskell, QuasiQuotes, TypeFamilies, MultiParamTypeClasses, FlexibleContexts, ScopedTypeVariables
 
 executable pkcloud-accounts
   main-is: main.hs
