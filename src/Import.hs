@@ -84,7 +84,7 @@ eitherField (t1, s1, f1) (t2, s2, f2) = Field parse view UrlEncoded
                                 }
 
                                 // Set required to true.
-                                var required = $('#'+requiredId);
+                                var required = $('[id^="'+requiredId+'"]');
                                 required.prop( 'required', true);
                             }
                         }
@@ -109,7 +109,7 @@ eitherField (t1, s1, f1) (t2, s2, f2) = Field parse view UrlEncoded
                                 }
 
                                 // Set required to false.
-                                var required = $('#'+requiredId);
+                                var required = $('[id^="'+requiredId+'"]');
                                 required.prop( 'required', false);
                             }
                         }
@@ -119,18 +119,18 @@ eitherField (t1, s1, f1) (t2, s2, f2) = Field parse view UrlEncoded
             [whamlet|
                 <div id="#{cssId}">
                     <div .controller .form-group>
-                        <div class="radio">
+                        <div class="radio" style="margin-top: 0px;">
                             <label>
                                 <input type="radio" name="#{name}" id="#{cssId}-left" value="left" *{attrs} data-toggle="collapse" data-parent="#{cssId}" data-target="#{leftTarget}" :leftSelected res:checked :required:required>
                                 #{t1}
-                        <div class="radio">
+                        <div class="radio" style="margin-top: 0px;">
                             <label>
-                                <input type="radio" name="#{name}" id="#{cssId}-right" value="right" *{attrs} data-toggle="collapse" data-parent="#{cssId}" data-target="#{leftTarget}" :leftSelected res:checked :required:required>
+                                <input type="radio" name="#{name}" id="#{cssId}-right" value="right" *{attrs} data-toggle="collapse" data-parent="#{cssId}" data-target="#{rightTarget}" :rightSelected res:checked :required:required>
                                 #{t2}
-                    <div id="#{leftTarget}" .form-group data-required="#{leftId}">
+                    <div id="#{leftTarget}" .form-group :not (leftSelected res):.collapse data-required="#{leftId}">
                         <label for="#{leftId}">#{fromMessage site langs s1}
                         ^{toView f1 s1 leftId leftName leftR required}
-                    <div id="#{rightTarget}" .form-group data-required="#{rightId}">
+                    <div id="#{rightTarget}" .form-group :not (rightSelected res):.collapse data-required="#{rightId}" style="margin-bottom: 0px;">
                         <label for="#{rightId}">#{fromMessage site langs s2}
                         ^{toView f2 s2 rightId rightName rightR required}
             |]
@@ -142,6 +142,11 @@ eitherField (t1, s1, f1) (t2, s2, f2) = Field parse view UrlEncoded
         leftSelected (Left _) = False
         leftSelected (Right (Left _)) = True
         leftSelected (Right (Right _)) = False
+
+        rightSelected (Left "right") = True
+        rightSelected (Left _) = False
+        rightSelected (Right (Left _)) = False
+        rightSelected (Right (Right _)) = True
 
 -- TODO: Move to pkcloud-core, error messages, "None" for maybe results XXX
 bootstrapRadioFieldList :: (Eq a, RenderMessage site FormMessage, RenderMessage site msg) => [(msg, a)] -> Field (HandlerT site IO) a
@@ -155,8 +160,8 @@ bootstrapRadioFieldList l = (radioFieldList l) -- radioField $ optionsPairs l
             site <- getYesod
             mapM_ (\(c :: Int, (msg, v)) -> [whamlet|
                 $newline never
-                <div .radio>
-                    <label>
+                <div .radio style="margin-top: 0px;">
+                    <label for="#{theId}-#{c}">
                         <input id="#{theId}-#{c}" *{attrs} type="radio" name=#{name} value=#{c} :valF v:checked> #{renderMessage site langs msg}
               |]) $ zip [1..] l
     }
