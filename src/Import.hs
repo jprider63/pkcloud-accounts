@@ -17,7 +17,8 @@ pkcloudSetMessageSuccess = pkcloudSetMessageDanger
 eitherField :: RenderMessage site FormMessage => (Text, FieldSettings site, Field (HandlerT site m) a) -> (Text, FieldSettings site, Field (HandlerT site m) b) -> Field (HandlerT site m) (Either a b)
 eitherField (t1, s1, f1) (t2, s2, f2) = Field parse view UrlEncoded
     where
-        parse _ _ = undefined
+        -- parse ["left"]  = undefined
+        parse vs _  = error $ show vs
         view cssId name attrs res required = do
             langs <- languages
             site <- getYesod
@@ -25,15 +26,13 @@ eitherField (t1, s1, f1) (t2, s2, f2) = Field parse view UrlEncoded
             let rightTarget = cssId <> "-right-target"
             let leftId = maybe (cssId <> "-left-field") id $ fsId s1
             let rightId = maybe (cssId <> "-right-field") id $ fsId s2
-            let leftName = maybe (name <> "-left-field") id $ fsName s1
-            let rightName = maybe (name <> "-right-field") id $ fsName s2
-            -- let (leftReq, rightReq) = case res of
-            --       Left err -> (required, False)
-            --       (Right (Left _)) -> (required, False)
-            --       (Right (Right _)) -> (False, required)
+            -- let leftName = maybe (name <> "-left-field") id $ fsName s1
+            -- let rightName = maybe (name <> "-right-field") id $ fsName s2
+            let leftName = name
+            let rightName = name
 
             let (leftR, rightR) = 
-                  let d = Left "TODO" in
+                  let d = Left "" in -- TODO: What should this be? XXX
                   case res of
                     Left err -> (Left err, Left err)
                     (Right (Left l)) -> (Right l, d)

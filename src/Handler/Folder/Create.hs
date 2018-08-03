@@ -41,4 +41,16 @@ getFolderCreateR = Book.layout (const "New Folder") $ \(Entity bookId book) acco
     generateHTML bookId accountTree Nothing
 
 postFolderCreateR :: Key Book -> HandlerT App IO Html
-postFolderCreateR = undefined
+postFolderCreateR = Book.layout (const "New Folder") $ \(Entity bookId book) accountTree -> do
+    -- Check that user can write to book.
+    handlerToWidget $ Book.requireCanWriteBook book
+
+    ((res, formW), formE) <- handlerToWidget $ runFormPost $ renderForm accountTree
+    case res of
+        FormMissing -> do
+            pkcloudSetMessageDanger "Creating folder failed."
+            generateHTML bookId accountTree $ Just (formW, formE)
+        FormFailure _msg -> do
+            pkcloudSetMessageDanger "Creating folder failed."
+            generateHTML bookId accountTree $ Just (formW, formE)
+        FormSuccess _ -> undefined
