@@ -3,8 +3,8 @@ module Folder where
 import qualified Book
 import Import
 
-treesToFolders :: MonadHandler m => [Book.AccountTree] -> m (OptionList FolderAccountId)
-treesToFolders trees = optionsPairs $ concatMap (toFolders "") trees
+treesToFolders :: [Book.AccountTree] -> [(Text, FolderAccountId)]
+treesToFolders trees = concatMap (toFolders "") trees
     where
         toFolders :: Text -> Book.AccountTree -> [(Text, FolderAccountId)]
         toFolders spacing (Book.FolderNode (Entity folderId folder) _ children) = 
@@ -13,3 +13,15 @@ treesToFolders trees = optionsPairs $ concatMap (toFolders "") trees
         toFolders _ (Book.AccountLeaf _ _) = []
 
         spacingChar = "-"
+
+treesToAccounts :: [Book.AccountTree] -> [(Text, AccountId)]
+treesToAccounts trees = concatMap (toAccounts "") trees
+    where
+        toAccounts :: Text -> Book.AccountTree -> [(Text, AccountId)]
+        toAccounts path (Book.FolderNode (Entity _ folder) _ children) = 
+            let path' = path <> folderAccountName folder <> spacingChar in
+            concatMap (toAccounts path') children
+        toAccounts path (Book.AccountLeaf (Entity accountId account) _) = 
+            [(path <> accountName account, accountId)]
+
+        spacingChar = ":"

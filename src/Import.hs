@@ -165,3 +165,7 @@ bootstrapRadioFieldList l = (radioFieldList l) -- radioField $ optionsPairs l
               |]) $ zip [1..] l
     }
 
+-- JP: Timezone conversions?
+dateField :: (Monad m, RenderMessage (HandlerSite m) FormMessage) => Field m UTCTime
+dateField = convertField (\d -> UTCTime d 0) utctDay dayField 
+

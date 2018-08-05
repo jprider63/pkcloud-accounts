@@ -2,6 +2,7 @@ module Handler.Transaction.Create where
 
 import qualified Book
 import qualified Data.Text.Lazy.Builder as TB
+import qualified Data.Text.Read as TR
 import qualified Folder
 import Import
 import Text.Blaze.Html.Renderer.String (renderHtml)
@@ -49,12 +50,53 @@ getTransactionCreateR = Book.layout (const "New Transaction") $ \(Entity bookId 
     generateHTML bookId accountTree Nothing
 
 postTransactionCreateR :: BookId -> Handler Html
-postTransactionCreateR = undefined
+postTransactionCreateR = Book.layout (const "New Transaction") $ \(Entity bookId book) accountTree -> do
+    -- Check that user can write to book.
+    handlerToWidget $ Book.requireCanWriteBook book
 
-entriesField :: ToBackendKey SqlBackend a => [(Text, Key a)] -> Field site [(Key a, Either Nano Nano)]
+    ((res, formW), formE) <- handlerToWidget $ renderForm accountTree >>= runFormPost
+    case res of
+        FormMissing -> do
+            pkcloudSetMessageDanger "Creating transaction failed."
+            generateHTML bookId accountTree $ Just (formW, formE)
+        FormFailure _msg -> do
+            pkcloudSetMessageDanger "Creating transaction failed."
+            generateHTML bookId accountTree $ Just (formW, formE)
+        FormSuccess (FormData _ _ _) -> do
+            undefined
+
+    
+
+entriesField :: (ToBackendKey SqlBackend a, Monad m) => [(Text, Key a)] -> Field m [(Key a, Either Nano Nano)]
 entriesField accounts = Field parse view UrlEncoded
     where
-        parse = error . show
+        parse vs _ | Just ps <- toTriple vs = return $ case sequence $ map parseTriple ps of
+            Left e -> Left e
+            Right vs -> 
+              let (d,c) = foldr (\v (d,c) -> case v of 
+                      (_, Left v) -> (d + v, c)
+                      (_, Right v) -> (d, c + v)
+                    ) (0,0) vs
+              in
+              if d == c then
+                Right $ Just vs
+              else
+                Left "Debits and credits must be equal." -- TODO: Move this check later where we know whether it's debit or credit? XXX
+        parse _ _ = return $ Left "entriesField: Unreachable?"
+
+        parseTriple (k, "", "") = Left "Amount missing."
+        parseTriple (k, "", c) = case (TR.decimal k, TR.rational c) of
+            (Right (k, ""),Right (c, "")) -> Right (toSqlKey k, Right c)
+            _ -> Left "Invalid number."
+        parseTriple (k, d, "") = case (TR.decimal k, TR.rational d) of
+            (Right (k, ""),Right (d, "")) -> Right (toSqlKey k, Left d)
+            _ -> Left "Invalid number."
+        parseTriple _ = Left "Only a debit or credit may be present."
+        
+        toTriple [] = Just []
+        toTriple (a:b:c:t) = ((a,b,c):) <$> toTriple t
+        toTriple _ = Nothing
+
         view theId name attrs val isReq = do
             let test = [shamlet|#{name}|]
             toWidget [julius|

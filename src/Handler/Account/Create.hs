@@ -12,7 +12,7 @@ data FormData = FormData {
 
 renderForm trees = renderBootstrap3 BootstrapBasicForm $ FormData
     <$> areq textField accountSettings Nothing
-    <*> areq (selectField folders) parentSettings Nothing
+    <*> areq (selectFieldList folders) parentSettings Nothing
     <*> areq checkBoxField featuredSettings Nothing -- TODO: Switch to bootstrapCheckBoxField XXX
 
     where

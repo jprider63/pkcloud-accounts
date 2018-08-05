@@ -39,7 +39,7 @@ BookFolderAccount
   isDebit Bool
   UniqueBookFolder book folder
 
-FolderAccount
+FolderAccount -- JP: Rename to Folder?
   name Text
   parent FolderAccountId Maybe
 

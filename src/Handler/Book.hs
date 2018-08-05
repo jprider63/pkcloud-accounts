@@ -37,7 +37,7 @@ getBookR = Book.layout (const "Overview") $ \(Entity bookId book) accountTree ->
 
     [whamlet|
         <div>
-            <a .btn .btn-primary href="#" .pull-right>
+            <a .btn .btn-primary href="@{TransactionCreateR bookId}" .pull-right>
                 New Transaction
         <div .clearfix>
         <h2>

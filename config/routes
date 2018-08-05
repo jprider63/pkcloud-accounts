@@ -8,6 +8,7 @@
 
 /book/#BookId/accounts/new AccountCreateR GET POST
 /book/#BookId/folders/new FolderCreateR GET POST
+/book/#BookId/transactions/new TransactionCreateR GET POST
 
 /favicon.ico FaviconR GET
 /robots.txt RobotsR GET

@@ -11,7 +11,7 @@ data FormData = FormData {
 
 renderForm trees = renderBootstrap3 BootstrapBasicForm $ FormData
     <$> areq textField folderSettings Nothing
-    <*> areq (eitherField ("Child folder", parentSettings, selectField folders) ("Root folder", typeSettings, bootstrapRadioFieldList [("Debit" :: Text, True),("Credit", False)])) eitherSettings Nothing
+    <*> areq (eitherField ("Child folder", parentSettings, selectFieldList folders) ("Root folder", typeSettings, bootstrapRadioFieldList [("Debit" :: Text, True),("Credit", False)])) eitherSettings Nothing
 
     where
         folderSettings = withPlaceholder "Name" $ bfs ("Folder Name" :: Text)
