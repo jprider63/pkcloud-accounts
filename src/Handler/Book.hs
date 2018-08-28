@@ -49,7 +49,7 @@ getBookR = Book.layout (const "Overview") $ \(Entity bookId book) accountTree ->
     |]
 
     where
-        filteredW :: [Book.AccountTree] -> Widget
+        filteredW :: [AccountTree] -> Widget
         filteredW tree =
             case catMaybes $ map filterFeatured tree of
                 [] ->
@@ -64,28 +64,28 @@ getBookR = Book.layout (const "Overview") $ \(Entity bookId book) accountTree ->
 
             
         -- Filter out unfeatured accounts.
-        filterFeatured :: Book.AccountTree -> Maybe Book.AccountTree
-        filterFeatured node@(Book.FolderNode _ _ _ children) = 
+        filterFeatured :: AccountTree -> Maybe AccountTree
+        filterFeatured node@(FolderNode _ _ _ children) = 
             case catMaybes $ map filterFeatured children of
                 [] ->
                     Nothing
                 children' -> 
-                    Just (node {Book.folderNodeChildren = children'})
+                    Just (node {folderNodeChildren = children'})
 
-        filterFeatured leaf@(Book.AccountLeaf (Entity _ account) _ _) = 
+        filterFeatured leaf@(AccountLeaf (Entity _ account) _ _) = 
             if accountFeatured account then
                 Just leaf
             else
                 Nothing
 
-        displayFeatured (Book.FolderNode (Entity folderId folder) balance isDebit children) = [whamlet|
+        displayFeatured (FolderNode (Entity folderId folder) balance isDebit children) = [whamlet|
             <li>
                 #{folderAccountName folder} - #{dollar balance}
                 <ul>
                     ^{concatMap displayFeatured children}
         |]
 
-        displayFeatured (Book.AccountLeaf (Entity accountId account) balance isDebit) = 
+        displayFeatured (AccountLeaf (Entity accountId account) balance isDebit) = 
             [whamlet|
                 <li>
                     #{accountName account} - #{dollar balance}

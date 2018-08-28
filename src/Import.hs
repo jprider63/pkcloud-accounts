@@ -5,6 +5,7 @@ module Import
 import Foundation            as Import
 import Import.NoFoundation   as Import
 import Text.Blaze
+import Types                 as Import
 import Yesod.Form.Bootstrap3 as Import
 
 -- TODO: Delete these. XXX

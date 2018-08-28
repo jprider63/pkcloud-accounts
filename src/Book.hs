@@ -1,5 +1,6 @@
 module Book where
 
+import qualified Account
 import qualified Database.Esqueleto as E
 import Import
 
@@ -68,19 +69,6 @@ layout titleF w bookId = do
                     #{accountName account} - #{dollar balance}
             |]
 
-data AccountTree = 
-      FolderNode {
-        folderNode :: Entity FolderAccount
-      , folderNodeBalance :: Nano
-      , folderNodeIsDebit :: Bool
-      , folderNodeChildren :: [AccountTree]
-      }
-    | AccountLeaf {
-        accountLeaf :: Entity Account
-      , accountLeafBalance :: Nano
-      , accountLeafIsDebit :: Bool
-      }
-
 accountTrees :: BookId -> Handler [AccountTree]
 accountTrees bookId = runDB $ do
     -- Get book folders.
@@ -109,7 +97,8 @@ folderAccountTree (folderE@(Entity fId _), isDebit) = do
 
     where
         accountLeaf isDebit accountE@(Entity accountId _) = do
-            -- TODO: Compute account balance.
-            let balance = 1
+            -- Compute account balance.
+            balance <- Account.queryBalance accountId
+
             return $ AccountLeaf accountE balance isDebit
 

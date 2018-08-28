@@ -22,7 +22,7 @@ renderForm trees = renderBootstrap3 BootstrapBasicForm $ FormData
 
         folders = Folder.treesToFolders trees
 
-generateHTML :: BookId -> [Book.AccountTree] -> Maybe (Widget, Enctype) -> Widget
+generateHTML :: BookId -> [AccountTree] -> Maybe (Widget, Enctype) -> Widget
 generateHTML bookId trees formM = do
     setTitle $ toHtml ("New Folder" :: Text)
     

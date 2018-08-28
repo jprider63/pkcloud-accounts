@@ -30,7 +30,7 @@ renderForm trees = do
 
         accounts = Folder.treesToAccounts trees
 
-generateHTML :: BookId -> [Book.AccountTree] -> Maybe (Widget, Enctype) -> Widget
+generateHTML :: BookId -> [AccountTree] -> Maybe (Widget, Enctype) -> Widget
 generateHTML bookId trees formM = do
     setTitle $ toHtml ("New Transaction" :: Text)
     
@@ -112,6 +112,7 @@ entriesField accounts = -- checkMMap toEntity (map toKey) $
         --     return ( Right rs :: Either Text [(Entity a, Either Nano Nano)])
 
         -- parse vs _ | Just ps <- toTriple vs = return $ fmap Just $ sequence $ map parseTriple ps
+        -- TODO: Could check that each account only appears once.
         parse vs _ | Just ps <- toTriple vs = return $ case sequence $ map parseTriple ps of
             Left e -> Left e
             Right vs -> 

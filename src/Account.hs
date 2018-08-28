@@ -1,6 +1,6 @@
 module Account where
 
-import Book (AccountTree(..))
+import qualified Database.Esqueleto as E
 import Import
 
 -- TODO: Cache this, make a map, or run DB queries?
@@ -18,3 +18,12 @@ getAccountNode [] aId = Nothing
 getAccountNode ((leaf@(AccountLeaf (Entity aId' _) _ _)):ts) aId | aId == aId' = Just leaf
 getAccountNode ((AccountLeaf _ _ _):ts) aId = getAccountNode ts aId
 getAccountNode ((FolderNode _ _ _ children):ts) aId = getAccountNode (children ++ ts) aId
+
+queryBalance :: MonadHandler m => AccountId -> ReaderT SqlBackend m Nano
+queryBalance aId = do
+    res <- E.select $ E.from $ \a -> do
+        E.where_ (a E.^. TransactionAccountAccount E.==. E.val aId)
+        return $ E.sum_ (a E.^. TransactionAccountAmount)
+    case res of
+        [E.Value (Just x)] -> return x
+        _ -> lift notFound -- Unreachable?
