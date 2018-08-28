@@ -26,4 +26,4 @@ queryBalance aId = do
         return $ E.sum_ (a E.^. TransactionAccountAmount)
     case res of
         [E.Value (Just x)] -> return x
-        _ -> lift notFound -- Unreachable?
+        _ -> return 0
