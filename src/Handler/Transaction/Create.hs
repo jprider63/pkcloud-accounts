@@ -1,5 +1,6 @@
 module Handler.Transaction.Create where
 
+import qualified Account
 import qualified Book
 import qualified Data.Text.Lazy.Builder as TB
 import qualified Data.Text.Read as TR
@@ -12,7 +13,7 @@ import Text.Julius (RawJavascript(..))
 data FormData = FormData {
       formDataDescription :: Text
     , formDataDate :: UTCTime
-    , formDataEntries :: [(AccountId, Either Nano Nano)]
+    , formDataEntries :: [(Key Account, Either Nano Nano)]
     }
 
 renderForm trees = do
@@ -62,14 +63,55 @@ postTransactionCreateR = Book.layout (const "New Transaction") $ \(Entity bookId
         FormFailure _msg -> do
             pkcloudSetMessageDanger "Creating transaction failed."
             generateHTML bookId accountTree $ Just (formW, formE)
-        FormSuccess (FormData _ _ _) -> do
-            undefined
+        FormSuccess (FormData description date entries) -> do
+            -- Get user.
+            uId <- handlerToWidget requireAuthId
 
-    
+            handlerToWidget $ runDB $ do
+                -- Insert transaction.
+                transactionId <- insert $ Transaction description date uId
 
-entriesField :: (ToBackendKey SqlBackend a, Monad m) => [(Text, Key a)] -> Field m [(Key a, Either Nano Nano)]
-entriesField accounts = Field parse view UrlEncoded
+                -- Insert transaction amounts.
+                mapM_ (insertTransactionAccount transactionId accountTree) entries
+
+            -- Set message.
+            pkcloudSetMessageSuccess "Created transaction!"
+
+            -- Redirect.
+            redirect $ TransactionCreateR bookId
+
     where
+        insertTransactionAccount tId accountTree (accountId, amountE) = do
+            -- Check account type.
+            isDebit <- Account.isDebit accountTree accountId
+
+            -- Compute amount based on type.
+            let amount = toAmount isDebit amountE
+            
+            -- Insert transaction.
+            insert_ $ TransactionAccount tId accountId amount
+
+        toAmount True (Left v) = v
+        toAmount False (Left v) = negate v
+        toAmount True (Right v) = negate v
+        toAmount False (Right v) = v
+            
+entriesField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text) => [(Text, Key a)] -> Field m [(Key a, Either Nano Nano)]
+-- entriesField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text) => [(Text, Key a)] -> Field m [(Entity a, Either Nano Nano)]
+entriesField accounts = -- checkMMap toEntity (map toKey) $ 
+    Field parse view UrlEncoded
+    
+    where
+        -- toKey (Entity k _, b) = (k, b)
+        -- toEntity rs' = do
+        --     rs <- runDB $ mapM (\(k, b) -> do
+        --             e <- get404 k
+        --             return $ (Entity k e, b)
+        --         ) rs'
+
+        --     return ( Right rs :: Either Text [(Entity a, Either Nano Nano)])
+
+        -- parse vs _ | Just ps <- toTriple vs = return $ fmap Just $ sequence $ map parseTriple ps
         parse vs _ | Just ps <- toTriple vs = return $ case sequence $ map parseTriple ps of
             Left e -> Left e
             Right vs -> 

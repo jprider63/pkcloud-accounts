@@ -55,14 +55,14 @@ layout titleF w bookId = do
                 ^{concatMap sidebarAccountTree trees}
         |]
 
-        sidebarAccountTree (FolderNode (Entity folderId folder) balance children) =
+        sidebarAccountTree (FolderNode (Entity folderId folder) balance isDebit children) =
             [whamlet|
                 <li>
                     #{folderAccountName folder} - #{dollar balance}
                     <ul>
                         ^{concatMap sidebarAccountTree children}
             |]
-        sidebarAccountTree (AccountLeaf (Entity accountId account) balance) =
+        sidebarAccountTree (AccountLeaf (Entity accountId account) balance isDebit) =
             [whamlet|
                 <li>
                     #{accountName account} - #{dollar balance}
@@ -72,11 +72,13 @@ data AccountTree =
       FolderNode {
         folderNode :: Entity FolderAccount
       , folderNodeBalance :: Nano
+      , folderNodeIsDebit :: Bool
       , folderNodeChildren :: [AccountTree]
       }
     | AccountLeaf {
         accountLeaf :: Entity Account
       , accountLeafBalance :: Nano
+      , accountLeafIsDebit :: Bool
       }
 
 accountTrees :: BookId -> Handler [AccountTree]
@@ -86,28 +88,28 @@ accountTrees bookId = runDB $ do
         E.on (bfa E.^. BookFolderAccountFolder E.==. fa E.^. FolderAccountId)
         E.where_ (bfa E.^. BookFolderAccountBook E.==. E.val bookId)
         E.orderBy [E.asc (bfa E.^. BookFolderAccountId)]
-        return fa
+        return (fa, bfa E.^. BookFolderAccountIsDebit)
 
     -- Get each folder's tree.
-    mapM (folderAccountTree) bookFolders
+    mapM (folderAccountTree . fmap E.unValue) bookFolders
 
-folderAccountTree :: Entity FolderAccount -> ReaderT SqlBackend Handler AccountTree
-folderAccountTree folderE@(Entity fId _) = do
+folderAccountTree :: (Entity FolderAccount, Bool) -> ReaderT SqlBackend Handler AccountTree
+folderAccountTree (folderE@(Entity fId _), isDebit) = do
     -- Get child folders.
     folders' <- selectList [FolderAccountParent ==. Just fId] []
-    folders <- mapM folderAccountTree folders'
+    folders <- mapM (\f -> folderAccountTree (f, isDebit)) folders'
 
     -- Get child accounts.
     accounts' <- selectList [AccountParent ==. fId] []
-    accounts <- mapM accountLeaf accounts'
+    accounts <- mapM (accountLeaf isDebit) accounts'
     
     let balance = sum $ map accountLeafBalance accounts ++ map folderNodeBalance folders
 
-    return $ FolderNode folderE balance $ folders ++ accounts
+    return $ FolderNode folderE balance isDebit $ folders ++ accounts
 
     where
-        accountLeaf accountE@(Entity accountId _) = do
+        accountLeaf isDebit accountE@(Entity accountId _) = do
             -- TODO: Compute account balance.
             let balance = 1
-            return $ AccountLeaf accountE balance
+            return $ AccountLeaf accountE balance isDebit
 

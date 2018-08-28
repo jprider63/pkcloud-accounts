@@ -67,6 +67,7 @@ library
   else
     ghc-options: -Wall -fwarn-tabs -O2
   exposed-modules:
+      Account
       Application
       Book
       Folder
