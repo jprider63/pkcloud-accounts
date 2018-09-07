@@ -72,12 +72,15 @@ library
       Book
       Folder
       Foundation
+      Handler.Account
       Handler.Account.Create
       Handler.Book
       Handler.Common
       Handler.Folder.Create
       Handler.Home
+      Handler.Transaction
       Handler.Transaction.Create
+      Handler.Transaction.Edit
       Import
       Import.NoFoundation
       Model

@@ -66,7 +66,9 @@ layout titleF w bookId = do
         sidebarAccountTree (AccountLeaf (Entity accountId account) balance isDebit) =
             [whamlet|
                 <li>
-                    #{accountName account} - #{dollar balance}
+                    <a href="@{AccountR bookId accountId}">
+                        #{accountName account}
+                    - #{dollar balance}
             |]
 
 accountTrees :: BookId -> Handler [AccountTree]

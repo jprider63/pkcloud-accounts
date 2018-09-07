@@ -63,9 +63,11 @@ postTransactionCreateR = Book.layout (const "New Transaction") $ \(Entity bookId
         FormFailure _msg -> do
             pkcloudSetMessageDanger "Creating transaction failed."
             generateHTML bookId accountTree $ Just (formW, formE)
-        FormSuccess (FormData description date entries) -> do
+        FormSuccess (FormData description date' entries) -> do
             -- Get user.
             uId <- handlerToWidget requireAuthId
+
+            date <- extractCurrentTime date'
 
             handlerToWidget $ runDB $ do
                 -- Insert transaction.
@@ -81,6 +83,10 @@ postTransactionCreateR = Book.layout (const "New Transaction") $ \(Entity bookId
             redirect $ TransactionCreateR bookId
 
     where
+        extractCurrentTime (UTCTime day _) = do
+            (UTCTime _ time) <- getCurrentTime
+            return $ UTCTime day time
+
         insertTransactionAccount tId accountTree (accountId, amountE) = do
             -- Check account type.
             isDebit <- Account.isDebit accountTree accountId

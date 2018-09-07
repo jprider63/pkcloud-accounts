@@ -6,8 +6,11 @@
 /book/#BookId BookR GET
 /books/new BookCreateR POST
 
+/book/#BookId/account/#AccountId AccountR GET
 /book/#BookId/accounts/new AccountCreateR GET POST
 /book/#BookId/folders/new FolderCreateR GET POST
+/book/#BookId/transaction/#TransactionId TransactionR GET
+/book/#BookId/transaction/#TransactionId/edit TransactionEditR GET POST
 /book/#BookId/transactions/new TransactionCreateR GET POST
 
 /favicon.ico FaviconR GET

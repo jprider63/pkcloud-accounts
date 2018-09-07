@@ -3,6 +3,7 @@ module Import.NoFoundation
     ( module Import
     , dollar
     , getCurrentTime
+    , shortDateTime
     ) where
 
 import ClassyPrelude.Yesod   as Import hiding (getCurrentTime)
@@ -18,6 +19,9 @@ import Yesod.Default.Config2 as Import
 
 dollar :: Nano -> String
 dollar d = '$':show d
+
+shortDateTime :: UTCTime -> String
+shortDateTime = formatTime defaultTimeLocale "%D" -- "%D %H:%M %P"
 
 getCurrentTime :: MonadIO m => m UTCTime
 getCurrentTime = liftIO Y.getCurrentTime

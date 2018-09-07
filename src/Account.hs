@@ -4,6 +4,7 @@ import qualified Database.Esqueleto as E
 import Import
 
 -- TODO: Cache this, make a map, or run DB queries?
+-- Throws permission denied if account isn't in the book's account tree.
 isDebit :: MonadHandler m => [AccountTree] -> AccountId -> m Bool
 isDebit ts aId = case getAccountNode ts aId of
     Nothing ->
@@ -11,7 +12,7 @@ isDebit ts aId = case getAccountNode ts aId of
     Just (AccountLeaf _ _ isDebit) ->
         return isDebit
     Just (FolderNode _ _ _ _) ->
-        error "unreachable"
+        permissionDenied ""
 
 getAccountNode :: [AccountTree] -> AccountId -> Maybe AccountTree
 getAccountNode [] aId = Nothing
