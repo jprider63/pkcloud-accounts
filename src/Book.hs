@@ -1,6 +1,6 @@
 module Book where
 
-import qualified Account
+-- import qualified Account
 import qualified Database.Esqueleto as E
 import Import
 
@@ -100,7 +100,17 @@ folderAccountTree (folderE@(Entity fId _), isDebit) = do
     where
         accountLeaf isDebit accountE@(Entity accountId _) = do
             -- Compute account balance.
-            balance <- Account.queryBalance accountId
+            balance <- queryAccountBalance accountId
 
             return $ AccountLeaf accountE balance isDebit
 
+        -- JP: Move to Import or Account?
+        queryAccountBalance :: MonadHandler m => AccountId -> ReaderT SqlBackend m Nano
+        queryAccountBalance aId = do
+            res <- E.select $ E.from $ \a -> do
+                E.where_ (a E.^. TransactionAccountAccount E.==. E.val aId)
+                return $ E.sum_ (a E.^. TransactionAccountAmount)
+            case res of
+                [E.Value (Just x)] -> return x
+                _ -> return 0
+        

@@ -1,5 +1,6 @@
 module Handler.Transaction where
 
+import qualified Account
 import qualified Book
 import qualified Database.Esqueleto as E
 import Import
@@ -8,6 +9,7 @@ getTransactionR :: BookId -> TransactionId -> Handler Html
 getTransactionR bookId transactionId = flip (Book.layout (const "Transaction")) bookId $ \(Entity bookId book) accountTree -> do
     -- TODO: Edit button XXX
         
+    -- JP: Make a Transaction.layout function?
     ts <- handlerToWidget $ runDB $ E.select $ E.from $ \(t `E.InnerJoin` ta `E.InnerJoin` a) -> do
         E.on (a E.^. AccountId E.==. ta E.^. TransactionAccountAccount)
         E.on (t E.^. TransactionId E.==. ta E.^. TransactionAccountTransaction)
@@ -16,6 +18,13 @@ getTransactionR bookId transactionId = flip (Book.layout (const "Transaction")) 
         E.orderBy [E.desc (ta E.^. TransactionAccountId)]
         -- E.groupBy (t E.^. TransactionId, ta E.^. TransactionAccountId)
         return (t, ta, a E.^. AccountName)
+
+    -- Check that the accounts are in the book.
+    -- JP: We could just check one if we have the invariant that all accounts in the transaction belong to the same book.
+    mapM_ (\(_, (Entity _ ta), _) ->
+        unless (Account.isInBook accountTree $ transactionAccountAccount ta) $
+            permissionDenied ""
+      ) $ take 1 ts
 
     [whamlet|
         <h2>

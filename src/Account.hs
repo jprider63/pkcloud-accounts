@@ -1,18 +1,22 @@
 module Account where
 
+import qualified Book
 import qualified Database.Esqueleto as E
 import Import
 
--- TODO: Cache this, make a map, or run DB queries?
+-- TODO: Cache this, make a map, or run DB queries? Change type of account tree to be Map (Either FolderId AccountId) (Either Folder Debit, Bool)?? Then use recursive CTE query for folders/accounts?
 -- Throws permission denied if account isn't in the book's account tree.
 isDebit :: MonadHandler m => [AccountTree] -> AccountId -> m Bool
 isDebit ts aId = case getAccountNode ts aId of
     Nothing ->
-        notFound
+        permissionDenied ""
     Just (AccountLeaf _ _ isDebit) ->
         return isDebit
     Just (FolderNode _ _ _ _) ->
-        permissionDenied ""
+        permissionDenied "Unreachable"
+
+isInBook :: [AccountTree] -> AccountId -> Bool
+isInBook a = maybe False (const True) . getAccountNode a
 
 getAccountNode :: [AccountTree] -> AccountId -> Maybe AccountTree
 getAccountNode [] aId = Nothing
@@ -20,11 +24,17 @@ getAccountNode ((leaf@(AccountLeaf (Entity aId' _) _ _)):ts) aId | aId == aId' =
 getAccountNode ((AccountLeaf _ _ _):ts) aId = getAccountNode ts aId
 getAccountNode ((FolderNode _ _ _ children):ts) aId = getAccountNode (children ++ ts) aId
 
-queryBalance :: MonadHandler m => AccountId -> ReaderT SqlBackend m Nano
-queryBalance aId = do
-    res <- E.select $ E.from $ \a -> do
-        E.where_ (a E.^. TransactionAccountAccount E.==. E.val aId)
-        return $ E.sum_ (a E.^. TransactionAccountAmount)
-    case res of
-        [E.Value (Just x)] -> return x
-        _ -> return 0
+layout :: (Account -> Text) -> (Entity Book -> Entity Account -> [AccountTree] -> Widget) -> BookId -> AccountId -> Handler Html
+layout titleF f bookId accountId = do
+    account <- runDB $ get404 accountId
+
+    Book.layout (const $ titleF account) (w account) bookId
+
+    where
+        w account bookE@(Entity bookId book) accountTree = do
+            -- Check if account is in book.
+            unless (isInBook accountTree accountId) $ 
+                permissionDenied ""
+            
+            -- CPS for widget.
+            f bookE (Entity accountId account) accountTree

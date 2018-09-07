@@ -1,14 +1,11 @@
 module Handler.Account where
 
-import qualified Book
+import qualified Account
 import qualified Database.Esqueleto as E
 import Import
 
 getAccountR :: BookId -> AccountId -> Handler Html
-getAccountR bookId accountId = do
-    -- JP: Make an Account.layout function?
-    account <- runDB $ get404 accountId
-    flip (Book.layout (const $ accountName account)) bookId $ \(Entity bookId book) accountTree -> do
+getAccountR = Account.layout accountName $ \(Entity bookId book) (Entity accountId account) accountTree -> do
         -- TODO: Fix this to get balance. XXX
         ts <- handlerToWidget $ runDB $ E.select $ E.from $ \(t `E.InnerJoin` ta) -> do
             E.on (t E.^. TransactionId E.==. ta E.^. TransactionAccountTransaction)
@@ -37,11 +34,11 @@ getAccountR bookId accountId = do
                         Amount
                     <th>
                         Balance
-                ^{concatMap displayTransaction ts}
+                ^{concatMap (displayTransaction bookId) ts}
         |]
 
     where
-        displayTransaction ((Entity tId t), (Entity taId ta), E.Value balance') = do
+        displayTransaction bookId ((Entity tId t), (Entity taId ta), E.Value balance') = do
             let balance = maybe "" dollar balance'
             -- TODO: Separate debits and credits. XXX
             [whamlet|
