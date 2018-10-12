@@ -157,7 +157,7 @@ entriesField accounts = -- checkMMap toEntity (map toKey) $
                         k += 1;
 
                         var parent = $('##{textToJs theId}');
-                        parent.append( '<div id="#{textToJs theId}-'+k+'" class="form-inline">#{htmlToJs accountsH}<input name="#{textToJs name}" #{attrsToJs attrs} type="number" value=""></input><input name="#{textToJs name}" #{attrsToJs attrs} type="number" value=""></input><div class="btn-group" role="group"><button type="button" class="btn btn-default" aria-label="Remove" onclick="_removeEntry(\'#{textToJs theId}\',\''+k+'\')"><span class="glyphicon glyphicon-minus" /></button><button type="button" class="btn btn-default" aria-label="Remove" onclick="_addEntry('+k+')"><span class="glyphicon glyphicon-plus" /></button></div></div>');
+                        parent.append( '<div id="#{textToJs theId}-'+k+'" class="form-inline">#{htmlToJs accountsH}<input name="#{textToJs name}" #{attrsToJs attrs} type="number" placeholder="Debit" value=""></input><input name="#{textToJs name}" #{attrsToJs attrs} type="number" placeholder="Credit" value=""></input><div class="btn-group" role="group"><button type="button" class="btn btn-default" aria-label="Remove" onclick="_removeEntry(\'#{textToJs theId}\',\''+k+'\')"><span class="glyphicon glyphicon-minus" /></button><button type="button" class="btn btn-default" aria-label="Remove" onclick="_addEntry('+k+')"><span class="glyphicon glyphicon-plus" /></button></div></div>');
                     }
                 }();
 
@@ -187,8 +187,8 @@ entriesField accounts = -- checkMMap toEntity (map toKey) $
                 <div id="#{theId}">
                     <div id="#{theId}-#{i}" .form-inline>
                         #{accountsH}
-                        <input name="#{name}" *{attrs} type="number" value="TODO">
-                        <input name="#{name}" *{attrs} type="number" value="TODO">
+                        <input name="#{name}" *{attrs} type="number" placeholder="Debit" value="TODO">
+                        <input name="#{name}" *{attrs} type="number" placeholder="Credit" value="TODO">
                         <div .btn-group role="group">
                             <button type="button" class="btn btn-default" aria-label="Remove" onclick="_removeEntry( '#{theId}', '#{i}')">
                                 <span .glyphicon .glyphicon-minus>
