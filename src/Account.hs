@@ -18,17 +18,30 @@ isDebit ts aId = case getAccountNode ts aId of
 isInBook :: [AccountTree] -> AccountId -> Bool
 isInBook a = maybe False (const True) . getAccountNode a
 
+amountToDebit :: Bool  -- | If account is debit.
+    -> Nano -> Maybe Nano
+amountToDebit True x | x >= 0 = Just x
+amountToDebit False x | x < 0 = Just $ negate x
+amountToDebit _ _ = Nothing
+
+
+amountToCredit :: Bool -- | If account is debit.
+    -> Nano -> Maybe Nano
+amountToCredit True x | x < 0 = Just $ negate x
+amountToCredit False x | x >= 0 = Just x
+amountToCredit _ _ = Nothing
+
 getAccountNode :: [AccountTree] -> AccountId -> Maybe AccountTree
 getAccountNode [] aId = Nothing
 getAccountNode ((leaf@(AccountLeaf (Entity aId' _) _ _)):ts) aId | aId == aId' = Just leaf
 getAccountNode ((AccountLeaf _ _ _):ts) aId = getAccountNode ts aId
 getAccountNode ((FolderNode _ _ _ children):ts) aId = getAccountNode (children ++ ts) aId
 
-layout :: (Account -> Text) -> (Entity Book -> Entity Account -> [AccountTree] -> Widget) -> BookId -> AccountId -> Handler Html
-layout titleF f bookId accountId = do
+layout :: (Entity Book -> Entity Account -> [AccountTree] -> Widget) -> BookId -> AccountId -> Handler Html
+layout f bookId accountId = do
     account <- runDB $ get404 accountId
 
-    Book.layout (const $ titleF account) (w account) bookId
+    Book.layout (w account) bookId
 
     where
         w account bookE@(Entity bookId book) accountTree = do

@@ -29,6 +29,8 @@ generateHTML bookId trees formM = do
     (formW, enctype) <- handlerToWidget $ maybe (generateFormPost $ renderForm trees) return formM
 
     [whamlet|
+        <h2>
+            New Folder
         <form method=post action=@{FolderCreateR bookId} enctype=#{enctype}>
             ^{formW}
             <div .form-group>
@@ -37,11 +39,11 @@ generateHTML bookId trees formM = do
     |]
 
 getFolderCreateR :: Key Book -> HandlerT App IO Html
-getFolderCreateR = Book.layout (const "New Folder") $ \(Entity bookId book) accountTree -> do
+getFolderCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
     generateHTML bookId accountTree Nothing
 
 postFolderCreateR :: Key Book -> HandlerT App IO Html
-postFolderCreateR = Book.layout (const "New Folder") $ \(Entity bookId book) accountTree -> do
+postFolderCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 

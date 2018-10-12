@@ -30,6 +30,8 @@ generateHTML bookId trees formM = do
 
     --     ^{msgH}
     [whamlet|
+        <h2>
+            New Account
         <form method=post action=@{AccountCreateR bookId} enctype=#{enctype}>
             ^{formW}
             <div .form-group>
@@ -38,11 +40,11 @@ generateHTML bookId trees formM = do
     |]
 
 getAccountCreateR :: BookId -> Handler Html
-getAccountCreateR = Book.layout (const "New Account") $ \(Entity bookId book) accountTree -> do
+getAccountCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
     generateHTML bookId accountTree Nothing
 
 postAccountCreateR :: BookId -> Handler Html
-postAccountCreateR = Book.layout (const "New Account") $ \(Entity bookId book) accountTree -> do
+postAccountCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 

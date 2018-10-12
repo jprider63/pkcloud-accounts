@@ -12,8 +12,8 @@ requireCanWriteBook book = do
 canViewBook :: UserId -> Book -> Bool
 canViewBook uId book = bookCreatedBy book == uId
 
-layout :: (Book -> Text) -> (Entity Book -> [AccountTree] -> Widget) -> BookId -> Handler Html
-layout titleF w bookId = do
+layout :: (Entity Book -> [AccountTree] -> Widget) -> BookId -> Handler Html
+layout w bookId = do
     -- Check if user is authenticated.
     uId <- requireAuthId
     
@@ -30,9 +30,7 @@ layout titleF w bookId = do
             <div .container>
                 <div .row>
                     <h1>
-                        #{bookName book}
-                        <small>
-                            #{titleF book}
+                        Book #{bookName book}
                 <div .row>
                     <div .col-xs-3>
                         ^{sidebarW accountTree}

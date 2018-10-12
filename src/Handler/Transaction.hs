@@ -6,7 +6,7 @@ import qualified Database.Esqueleto as E
 import Import
 
 getTransactionR :: BookId -> TransactionId -> Handler Html
-getTransactionR bookId transactionId = flip (Book.layout (const "Transaction")) bookId $ \(Entity bookId book) accountTree -> do
+getTransactionR bookId transactionId = flip Book.layout bookId $ \(Entity bookId book) accountTree -> do
     -- TODO: Edit button XXX
         
     -- JP: Make a Transaction.layout function?
@@ -17,7 +17,7 @@ getTransactionR bookId transactionId = flip (Book.layout (const "Transaction")) 
         -- E.orderBy [E.desc (t E.^. TransactionDate), E.desc (t E.^. TransactionId)]
         E.orderBy [E.desc (ta E.^. TransactionAccountId)]
         -- E.groupBy (t E.^. TransactionId, ta E.^. TransactionAccountId)
-        return (t, ta, a E.^. AccountName)
+        return (t, ta, a)
 
     -- Check that the accounts are in the book.
     -- JP: We could just check one if we have the invariant that all accounts in the transaction belong to the same book.
@@ -38,14 +38,18 @@ getTransactionR bookId transactionId = flip (Book.layout (const "Transaction")) 
                 <th>
                     Account
                 <th>
-                    Amount
-            ^{concatMap (displayTransactionRow bookId) ts}
+                    Debit
+                <th>
+                    Credit
+            ^{concatMap (displayTransactionRow bookId accountTree) ts}
     |]
 
     where
         -- TODO: Don't display description and date multiple times.
         -- TODO: Separate debits and credits. Lookup accounts from account tree? XXX
-        displayTransactionRow bookId ((Entity tId t), (Entity taId ta), E.Value accountName) = do
+        displayTransactionRow bookId accountTree ((Entity tId t), (Entity taId ta), (Entity aId a)) = do
+            accountIsDebit <- Account.isDebit accountTree aId
+
             -- let balance = maybe "" dollar balance'
             [whamlet|
                 <tr>
@@ -55,8 +59,10 @@ getTransactionR bookId transactionId = flip (Book.layout (const "Transaction")) 
                         #{shortDateTime (transactionDate t)}
                     <td>
                         <a href="@{AccountR bookId $ transactionAccountAccount ta}">
-                            #{accountName}
+                            #{accountName a}
                     <td>
-                        #{dollar (transactionAccountAmount ta)}
+                        #{maybe "" dollar (Account.amountToDebit accountIsDebit $ transactionAccountAmount ta)}
+                    <td>
+                        #{maybe "" dollar (Account.amountToCredit accountIsDebit $ transactionAccountAmount ta)}
             |]
         

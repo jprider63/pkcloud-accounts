@@ -32,10 +32,12 @@ postBookCreateR = do
 
 --JP: Change BookId to a unique BookUrl?
 getBookR :: BookId -> Handler Html
-getBookR = Book.layout (const "Overview") $ \(Entity bookId book) accountTree -> do
+getBookR = Book.layout $ \(Entity bookId book) accountTree -> do
     setTitle $ toHtml $ bookName book
 
     [whamlet|
+        <h2>
+            Overview
         <div>
             <a .btn .btn-primary href="@{TransactionCreateR bookId}" .pull-right>
                 New Transaction

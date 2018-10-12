@@ -39,6 +39,8 @@ generateHTML bookId trees formM = do
     -- TODO: Button to load saved transactions. XXX
 
     [whamlet|
+        <h2>
+            New Transaction
         <form method=post action=@{TransactionCreateR bookId} enctype=#{enctype}>
             ^{formW}
             <div .form-group>
@@ -47,11 +49,11 @@ generateHTML bookId trees formM = do
     |]
 
 getTransactionCreateR :: BookId -> Handler Html
-getTransactionCreateR = Book.layout (const "New Transaction") $ \(Entity bookId book) accountTree -> do
+getTransactionCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
     generateHTML bookId accountTree Nothing
 
 postTransactionCreateR :: BookId -> Handler Html
-postTransactionCreateR = Book.layout (const "New Transaction") $ \(Entity bookId book) accountTree -> do
+postTransactionCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 
