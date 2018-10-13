@@ -13,7 +13,7 @@ getAccountR = Account.layout $ \(Entity bookId book) (Entity accountId account) 
             E.where_ (ta E.^. TransactionAccountAccount E.==. E.val accountId)
             E.orderBy [E.desc (t E.^. TransactionDate), E.desc (t E.^. TransactionId)]
             E.groupBy (t E.^. TransactionId, ta E.^. TransactionAccountId)
-            return (t, ta, (E.sum_ (ta E.^. TransactionAccountAmount)))
+            return (t, ta, E.over (E.sum_ (ta E.^. TransactionAccountAmount)) (Just $ ta E.^. TransactionAccountAccount) [E.asc (t E.^. TransactionDate), E.asc (t E.^. TransactionId)])
 
         accountIsDebit <- Account.isDebit accountTree accountId
 

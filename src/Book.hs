@@ -29,8 +29,9 @@ layout w bookId = do
     defaultLayout $ [whamlet|
             <div .container>
                 <div .row>
-                    <h1>
-                        Book #{bookName book}
+                    <div .col-xs-12>
+                        <h1>
+                            Book #{bookName book}
                 <div .row>
                     <div .col-xs-3>
                         ^{sidebarW accountTree}
