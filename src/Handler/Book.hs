@@ -10,7 +10,7 @@ postBookCreateR = do
 
     -- Insert book.
     book <- (requireJsonBody :: Handler Book)
-    now <- lift getCurrentTime
+    now <- getCurrentTime
     let book' = book { bookCreatedBy = currentUserId
                      , bookDateCreated = now }
     insertedBook <- runDB $ do
