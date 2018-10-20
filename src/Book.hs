@@ -1,8 +1,37 @@
 module Book where
 
--- import qualified Account
+import qualified Data.Aeson as Aeson
+import qualified Data.ByteString.Lazy as BSL
 import qualified Database.Esqueleto as E
+
+-- import qualified Account
 import Import
+
+_lastOpenedBookKey :: Text
+_lastOpenedBookKey = "_pkcloud_accounts_lastopened"
+
+setLastOpened :: MonadHandler m => BookId -> m ()
+setLastOpened bookId = 
+    setSessionBS _lastOpenedBookKey $ BSL.toStrict $ Aeson.encode bookId
+
+getLastOpened :: Handler (Maybe BookId)
+getLastOpened = do
+    -- Get current user.
+    userId <- requireAuthId
+
+    -- Lookup latest book.
+    bookIdM <- (>>= Aeson.decodeStrict) <$> lookupSessionBS _lastOpenedBookKey
+    case bookIdM of
+        Nothing ->
+            return Nothing
+        Just bookId -> do
+            book <- runDB $ get404 bookId
+
+            -- Make sure user can read book.
+            return $ if canViewBook userId book then
+                Just bookId
+            else
+                Nothing
 
 requireCanWriteBook book = do
     uId <- requireAuthId
@@ -31,7 +60,7 @@ layout w bookId = do
                 <div .row>
                     <div .col-xs-12>
                         <h1>
-                            Book #{bookName book}
+                            #{bookName book}
                 <div .row>
                     <div .col-xs-3>
                         ^{sidebarW accountTree}

@@ -41,6 +41,7 @@ import System.Log.FastLogger                (defaultBufSize, newStdoutLoggerSet,
 import Handler.Account
 import Handler.Account.Create
 import Handler.Book
+import Handler.Books
 import Handler.Common
 import Handler.Folder.Create
 import Handler.Home

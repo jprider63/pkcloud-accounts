@@ -35,6 +35,8 @@ getBookR :: BookId -> Handler Html
 getBookR = Book.layout $ \(Entity bookId book) accountTree -> do
     setTitle $ toHtml $ bookName book
 
+    Book.setLastOpened bookId
+
     [whamlet|
         <h2>
             Overview

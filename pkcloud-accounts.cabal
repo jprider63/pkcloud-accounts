@@ -76,6 +76,7 @@ library
       Handler.Account
       Handler.Account.Create
       Handler.Book
+      Handler.Books
       Handler.Common
       Handler.Folder.Create
       Handler.Home

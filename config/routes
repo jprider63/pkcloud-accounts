@@ -4,6 +4,7 @@
 / HomeR GET
 
 /book/#BookId BookR GET
+/books BooksR GET
 /books/new BookCreateR POST
 
 /book/#BookId/account/#AccountId AccountR GET
