@@ -7,6 +7,7 @@ import Import
 
 getTransactionR :: BookId -> TransactionId -> Handler Html
 getTransactionR bookId transactionId = flip Book.layout bookId $ \(Entity bookId book) accountTree -> do
+    setTitle $ toHtml ("Transaction" :: Text)
     -- TODO: Edit button XXX
         
     -- JP: Make a Transaction.layout function?
@@ -15,7 +16,7 @@ getTransactionR bookId transactionId = flip Book.layout bookId $ \(Entity bookId
         E.on (t E.^. TransactionId E.==. ta E.^. TransactionAccountTransaction)
         E.where_ (t E.^. TransactionId E.==. E.val transactionId)
         -- E.orderBy [E.desc (t E.^. TransactionDate), E.desc (t E.^. TransactionId)]
-        E.orderBy [E.desc (ta E.^. TransactionAccountId)]
+        E.orderBy [E.asc (ta E.^. TransactionAccountId)]
         -- E.groupBy (t E.^. TransactionId, ta E.^. TransactionAccountId)
         return (t, ta, a)
 
@@ -24,6 +25,8 @@ getTransactionR bookId transactionId = flip Book.layout bookId $ \(Entity bookId
     Account.requireAllInBook accountTree $ map (\(_, (Entity _ ta), _) -> transactionAccountAccount ta) $ take 1 ts
 
     [whamlet|
+        <a class="btn btn-primary pull-right" href="@{TransactionEditR bookId transactionId}">
+            Edit
         <h2>
             Transaction
         <table .table .table-condensed>

@@ -89,15 +89,17 @@ postTransactionCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
             (UTCTime _ time) <- getCurrentTime
             return $ UTCTime day time
 
-        insertTransactionAccount tId accountTree (accountId, amountE) = do
-            -- Check account type.
-            isDebit <- Account.isDebit accountTree accountId
+insertTransactionAccount tId accountTree (accountId, amountE) = do
+    -- Check account type.
+    isDebit <- Account.isDebit accountTree accountId
 
-            -- Compute amount based on type.
-            let amount = toAmount isDebit amountE
-            
-            -- Insert transaction.
-            insert_ $ TransactionAccount tId accountId amount
+    -- Compute amount based on type.
+    let amount = toAmount isDebit amountE
+    
+    -- Insert transaction.
+    insert_ $ TransactionAccount tId accountId amount
+
+    where
 
         toAmount True (Left v) = v
         toAmount False (Left v) = negate v

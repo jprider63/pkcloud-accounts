@@ -30,7 +30,7 @@ generateHTML bookId transactionId trees formM = do
             -- Load transaction.
             (transaction, entries) <- runDB $ do
                 t <- get404 transactionId
-                e <- selectList [TransactionAccountTransaction ==. transactionId] [Desc TransactionAccountId]
+                e <- selectList [TransactionAccountTransaction ==. transactionId] [Asc TransactionAccountId]
 
                 return (t, e)
 
@@ -57,4 +57,35 @@ getTransactionEditR bookId transactionId = flip Book.layout bookId $ \(Entity bo
     generateHTML bookId transactionId accountTree Nothing
 
 postTransactionEditR :: BookId -> TransactionId -> Handler Html
-postTransactionEditR = undefined
+postTransactionEditR  bookId transactionId = flip Book.layout bookId $ \(Entity bookId book) accountTree -> do
+    -- Check that user can write to book.
+    handlerToWidget $ Book.requireCanWriteBook book
+
+    ((res, formW), formE) <- handlerToWidget $ runFormPost $ renderForm Nothing Nothing Nothing accountTree
+    case res of
+        FormMissing -> do
+            pkcloudSetMessageDanger "Editing transaction failed."
+            generateHTML bookId transactionId accountTree $ Just (formW, formE)
+        FormFailure _msg -> do
+            pkcloudSetMessageDanger "Editing transaction failed."
+            generateHTML bookId transactionId accountTree $ Just (formW, formE)
+        FormSuccess (FormData description (UTCTime date' _) entries) -> do
+            handlerToWidget $ runDB $ do
+                -- Extract date time.
+                (UTCTime _ time) <- transactionDate <$> get404 transactionId
+                let date = UTCTime date' time
+
+                -- Delete old transaction amounts.
+                deleteWhere [TransactionAccountTransaction ==. transactionId]
+
+                -- Insert transaction amounts.
+                mapM_ (insertTransactionAccount transactionId accountTree) entries
+
+                -- Update transaction.
+                update transactionId [TransactionDescription =. description, TransactionDate =. date]
+
+            -- Set message.
+            pkcloudSetMessageSuccess "Edited transaction!"
+
+            -- Redirect.
+            redirect $ TransactionR bookId transactionId
