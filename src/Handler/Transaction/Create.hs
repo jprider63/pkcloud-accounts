@@ -206,8 +206,8 @@ entriesField accounts = -- checkMMap toEntity (map toKey) $
                 [whamlet|$newline never
                         <div id="#{theId}-#{i}" .form-inline>
                             #{accountsH a}
-                            <input name="#{name}" *{attrs} type="number" placeholder="Debit" value="#{d}">
-                            <input name="#{name}" *{attrs} type="number" placeholder="Credit" value="#{c}">
+                            <input name="#{name}" *{attrs} type="number" placeholder="Debit" value="#{d}" step="0.01">
+                            <input name="#{name}" *{attrs} type="number" placeholder="Credit" value="#{c}" step="0.01">
                             <div .btn-group role="group">
                                 <button type="button" class="btn btn-default" aria-label="Remove" onclick="_removeEntry( '#{theId}', '#{i}')">
                                     <span .glyphicon .glyphicon-minus>
