@@ -6,6 +6,7 @@ import qualified Data.Text.Lazy.Builder as TB
 import qualified Data.Text.Read as TR
 import qualified Folder
 import Import
+import Text.Blaze (toMarkup)
 import Text.Blaze.Html.Renderer.String (renderHtml)
 import qualified Text.Hamlet as TH
 import Text.Julius (RawJavascript(..))
@@ -16,12 +17,11 @@ data FormData = FormData {
     , formDataEntries :: [(Key Account, Either Nano Nano)]
     }
 
-renderForm trees = do
-    now <- getCurrentTime
-    return $ renderBootstrap3 BootstrapBasicForm $ FormData
-        <$> areq textField descriptionSettings Nothing
-        <*> areq dateField dateSettings (Just now)
-        <*> areq (entriesField accounts) entriesSettings Nothing
+renderForm descM dateM entriesM trees =
+    renderBootstrap3 BootstrapBasicForm $ FormData
+        <$> areq textField descriptionSettings descM
+        <*> areq dateField dateSettings dateM
+        <*> areq (entriesField accounts) entriesSettings entriesM
     
     where
         descriptionSettings = withPlaceholder "Description" $ bfs ("Description" :: Text)
@@ -34,7 +34,7 @@ generateHTML :: BookId -> [AccountTree] -> Maybe (Widget, Enctype) -> Widget
 generateHTML bookId trees formM = do
     setTitle $ toHtml ("New Transaction" :: Text)
     
-    (formW, enctype) <- handlerToWidget $ maybe (renderForm trees >>= generateFormPost) return formM
+    (formW, enctype) <- handlerToWidget $ maybe (getCurrentTime >>= \now -> generateFormPost $ renderForm Nothing (Just now) Nothing trees) return formM
 
     -- TODO: Button to load saved transactions. XXX
 
@@ -57,7 +57,7 @@ postTransactionCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 
-    ((res, formW), formE) <- handlerToWidget $ renderForm accountTree >>= runFormPost
+    ((res, formW), formE) <- handlerToWidget $ runFormPost $ renderForm Nothing Nothing Nothing accountTree
     case res of
         FormMissing -> do
             pkcloudSetMessageDanger "Creating transaction failed."
@@ -104,7 +104,7 @@ postTransactionCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
         toAmount True (Right v) = negate v
         toAmount False (Right v) = v
             
-entriesField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text) => [(Text, Key a)] -> Field m [(Key a, Either Nano Nano)]
+entriesField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text, a ~ Account) => [(Text, Key a)] -> Field m [(Key a, Either Nano Nano)]
 -- entriesField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text) => [(Text, Key a)] -> Field m [(Entity a, Either Nano Nano)]
 entriesField accounts = -- checkMMap toEntity (map toKey) $ 
     Field parse view UrlEncoded
@@ -148,18 +148,19 @@ entriesField accounts = -- checkMMap toEntity (map toKey) $
         toTriple (a:b:c:t) = ((a,b,c):) <$> toTriple t
         toTriple _ = Nothing
 
-        view theId name attrs val isReq = do
-            let test = [shamlet|#{name}|]
+        view theId name attrs val' isReq = do
+            let val = either (const []) id val'
+            let k = length val + 1
             toWidget [julius|
                 var _addEntry = function( i) {
-                    var k = 1; // TODO XXX
+                    var k = #{intToJs k};
                 
                     return function() {
                         // Make a fresh k.
                         k += 1;
 
                         var parent = $('##{textToJs theId}');
-                        parent.append( '<div id="#{textToJs theId}-'+k+'" class="form-inline">#{htmlToJs accountsH}<input name="#{textToJs name}" #{attrsToJs attrs} type="number" placeholder="Debit" value=""></input><input name="#{textToJs name}" #{attrsToJs attrs} type="number" placeholder="Credit" value=""></input><div class="btn-group" role="group"><button type="button" class="btn btn-default" aria-label="Remove" onclick="_removeEntry(\'#{textToJs theId}\',\''+k+'\')"><span class="glyphicon glyphicon-minus" /></button><button type="button" class="btn btn-default" aria-label="Remove" onclick="_addEntry('+k+')"><span class="glyphicon glyphicon-plus" /></button></div></div>');
+                        parent.append( '<div id="#{textToJs theId}-'+k+'" class="form-inline">#{htmlToJs $ accountsH Nothing}<input name="#{textToJs name}" #{attrsToJs attrs} type="number" placeholder="Debit" value=""></input><input name="#{textToJs name}" #{attrsToJs attrs} type="number" placeholder="Credit" value=""></input><div class="btn-group" role="group"><button type="button" class="btn btn-default" aria-label="Remove" onclick="_removeEntry(\'#{textToJs theId}\',\''+k+'\')"><span class="glyphicon glyphicon-minus" /></button><button type="button" class="btn btn-default" aria-label="Remove" onclick="_addEntry('+k+')"><span class="glyphicon glyphicon-plus" /></button></div></div>');
                     }
                 }();
 
@@ -184,36 +185,53 @@ entriesField accounts = -- checkMMap toEntity (map toKey) $
                     // }
                 };
             |]
-            let i = 1 :: Int
-            [whamlet|$newline never
+
+            let rs = if null val then
+                      let i = 1 :: Int in
+                      rowW Nothing Nothing Nothing i
+                  else
+                      mapM_ (\((a, m), i) -> rowW (Just a) (either Just (const Nothing) m) (either (const Nothing) Just m) i) $ zip val [1..]
+
+            [whamlet|
                 <div id="#{theId}">
-                    <div id="#{theId}-#{i}" .form-inline>
-                        #{accountsH}
-                        <input name="#{name}" *{attrs} type="number" placeholder="Debit" value="TODO">
-                        <input name="#{name}" *{attrs} type="number" placeholder="Credit" value="TODO">
-                        <div .btn-group role="group">
-                            <button type="button" class="btn btn-default" aria-label="Remove" onclick="_removeEntry( '#{theId}', '#{i}')">
-                                <span .glyphicon .glyphicon-minus>
-                            <button type="button" class="btn btn-default" aria-label="Remove" onclick="_addEntry('#{i}')">
-                                <span .glyphicon .glyphicon-plus>
+                    ^{rs}
             |]
-            -- :isReq:required="" 
-                    -- <div id="#{theId}-#{i}" .form-inline>
-                        -- <div .btn-group role="group">
-                        -- <div .input-group>
 
           where
-            accountsH = [shamlet|$newline never
-                <select name="#{name}" *{attrs} :isReq:required="" value="TODO">
-                    ^{mapM_ accountH accounts}
-            |]
+            rowW a dM cM i = 
+                let d = maybe mempty show dM in
+                let c = maybe mempty show cM in
+                [whamlet|$newline never
+                        <div id="#{theId}-#{i}" .form-inline>
+                            #{accountsH a}
+                            <input name="#{name}" *{attrs} type="number" placeholder="Debit" value="#{d}">
+                            <input name="#{name}" *{attrs} type="number" placeholder="Credit" value="#{c}">
+                            <div .btn-group role="group">
+                                <button type="button" class="btn btn-default" aria-label="Remove" onclick="_removeEntry( '#{theId}', '#{i}')">
+                                    <span .glyphicon .glyphicon-minus>
+                                <button type="button" class="btn btn-default" aria-label="Remove" onclick="_addEntry('#{i}')">
+                                    <span .glyphicon .glyphicon-plus>
+                |]
+                -- :isReq:required="" 
+                        -- <div id="#{theId}-#{i}" .form-inline>
+                            -- <div .btn-group role="group">
+                        -- <div .input-group>
 
-            accountH (t, aId) = 
-                let isSel = False in -- TODO: Impl this XXX
+            accountsH :: Maybe AccountId -> Html
+            accountsH accountIdM = 
+                let accountV = maybe mempty (toMarkup . fromSqlKey) accountIdM in
+                [shamlet|$newline never
+                    <select name="#{name}" *{attrs} :isReq:required="" value="#{accountV}">
+                        ^{mapM_ (accountH accountIdM) accounts}
+                |]
+
+            accountH accountIdM (t, aId) = 
+                let isSel = accountIdM == Just aId in
                 [shamlet|$newline never
                     <option value="#{fromSqlKey aId}" :isSel:selected>#{t}
                 |]
 
+            intToJs = RawJavascript . TB.fromString . show
             textToJs = RawJavascript . TB.fromText
             htmlToJs = RawJavascript . TB.fromString . renderHtml
             attrsToJs = htmlToJs . TH.attrsToHtml

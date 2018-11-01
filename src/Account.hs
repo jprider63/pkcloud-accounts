@@ -15,6 +15,11 @@ isDebit ts aId = case getAccountNode ts aId of
     Just (FolderNode _ _ _ _) ->
         permissionDenied "Unreachable"
 
+requireAllInBook :: MonadHandler m => [AccountTree] -> [AccountId] -> m ()
+requireAllInBook accountTree = mapM_ $ \aId ->
+    unless (isInBook accountTree aId) $
+        permissionDenied ""
+
 isInBook :: [AccountTree] -> AccountId -> Bool
 isInBook a = maybe False (const True) . getAccountNode a
 

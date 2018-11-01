@@ -21,10 +21,7 @@ getTransactionR bookId transactionId = flip Book.layout bookId $ \(Entity bookId
 
     -- Check that the accounts are in the book.
     -- JP: We could just check one if we have the invariant that all accounts in the transaction belong to the same book.
-    mapM_ (\(_, (Entity _ ta), _) ->
-        unless (Account.isInBook accountTree $ transactionAccountAccount ta) $
-            permissionDenied ""
-      ) $ take 1 ts
+    Account.requireAllInBook accountTree $ map (\(_, (Entity _ ta), _) -> transactionAccountAccount ta) $ take 1 ts
 
     [whamlet|
         <h2>
