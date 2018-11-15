@@ -171,12 +171,10 @@ bootstrapRadioFieldList l = (radioFieldList l) -- radioField $ optionsPairs l
 dateField :: (Monad m, RenderMessage (HandlerSite m) FormMessage) => Field m UTCTime
 dateField = convertField (\d -> UTCTime d 0) utctDay dayField 
 
--- transactionWindowFunction :: (Monad m) => m ( expr (Entity Transaction), expr (Entity TransactionAccount), expr (E.Value (Maybe Nano)))
--- transactionWindowFunction = select $ E.from $ \(t `E.InnerJoin` ta) -> do
---     E.on (t E.^. TransactionId E.==. ta E.^. TransactionAccountTransaction)
---     -- E.where_ (ta E.^. TransactionAccountAccount E.==. E.val accountId)
---     E.orderBy [E.desc (t E.^. TransactionDate), E.desc (t E.^. TransactionId)]
---     E.groupBy (t E.^. TransactionId, ta E.^. TransactionAccountId)
---     return (t, ta, (E.sum_ (ta E.^. TransactionAccountAmount)))
-    
-
+transactionQuery :: E.SqlQuery (E.SqlExpr (Entity Transaction), E.SqlExpr (Entity TransactionAccount), E.SqlExpr (E.Alias (E.Value (Maybe Nano))))
+transactionQuery = E.from $ \(t `E.InnerJoin` ta) -> do
+    E.on (t E.^. TransactionId E.==. ta E.^. TransactionAccountTransaction)
+    E.orderBy [E.desc (t E.^. TransactionDate), E.desc (t E.^. TransactionId)]
+    E.groupBy (t E.^. TransactionId, ta E.^. TransactionAccountId)
+    s <- E.as $ E.over (E.sum_ (ta E.^. TransactionAccountAmount)) (Just $ ta E.^. TransactionAccountAccount) [E.asc (t E.^. TransactionDate), E.asc (t E.^. TransactionId)]
+    return (t, ta, s)

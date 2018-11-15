@@ -1,5 +1,8 @@
 module Handler.Book where
 
+import qualified Database.Esqueleto as E
+
+import qualified Account
 import qualified Book
 import Import
 
@@ -50,9 +53,80 @@ getBookR = Book.layout $ \(Entity bookId book) accountTree -> do
             ^{filteredW accountTree}
         <h2>
             Recent Transactions
+        <div>
+            ^{recentW accountTree bookId}
     |]
 
     where
+        recentW :: [AccountTree] -> BookId -> Widget
+        recentW accountTree bookId = do
+            ts' <- handlerToWidget $ runDB $ E.select $ E.fromSubSelect transactionQuery $ \(t, ta, s) -> do
+                E.where_ (ta E.^. TransactionAccountAccount `E.in_` E.valList (Account.toAccountIds accountTree))
+                return (t, ta, E.fromAlias s)
+
+            -- Mark if we should display the description.
+            -- TODO: Is there a faster way? XXX
+            let ts = groupBy (\((Entity a _),_,_) ((Entity b _),_,_) -> a == b) ts'
+
+            [whamlet|
+                <table .table .table-condensed>
+                    <tr>
+                        <th>
+                            Description
+                        <th>
+                            Date
+                        <th>
+                            Account
+                        <th>
+                            Debit
+                        <th>
+                            Credit
+                        <th>
+                            Balance
+                    ^{concatMap (displayTransaction accountTree bookId . reverse) ts}
+            |]
+
+        displayTransaction accountTree bookId [] = error "unreachable"
+        displayTransaction accountTree bookId (first:rest) =
+            let f = displayRow accountTree bookId in
+            mconcat $ (f True first): map (f False) rest
+        
+        displayRow accountTree bookId displayDescription ((Entity tId t), (Entity taId ta), E.Value balance') = do
+            ((Entity aId a), _, accountIsDebit) <- Account.leaf accountTree $ transactionAccountAccount ta
+            let balance = maybe "" dollar balance'
+            [whamlet|
+                <tr .#{style}>
+                    <td>
+                        ^{desc}
+                    <td>
+                        ^{date}
+                    <td>
+                        <a href="@{AccountR bookId aId}">
+                            #{accountName a}
+                    <td>
+                        #{maybe "" dollar (Account.amountToDebit accountIsDebit $ transactionAccountAmount ta)}
+                    <td>
+                        #{maybe "" dollar (Account.amountToCredit accountIsDebit $ transactionAccountAmount ta)}
+                    <td>
+                        #{balance}
+            |]
+
+            where
+                style = if displayDescription then "transaction-first" else "transaction-rest" :: Text
+                desc = if displayDescription then [whamlet|
+                        <a href="@{TransactionR bookId tId}">
+                            #{transactionDescription t}
+                      |]
+                    else
+                      mempty
+
+                date = if displayDescription then [whamlet|
+                        #{shortDateTime (transactionDate t)}
+                      |]
+                    else
+                        mempty
+                        
+
         filteredW :: [AccountTree] -> Widget
         filteredW tree =
             case catMaybes $ map filterFeatured tree of

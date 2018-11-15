@@ -8,12 +8,26 @@ getAccountR :: BookId -> AccountId -> Handler Html
 getAccountR = Account.layout $ \(Entity bookId book) (Entity accountId account) accountTree -> do
         setTitle $ toHtml $ accountName account
         -- TODO: Fix this to get balance. XXX
-        ts <- handlerToWidget $ runDB $ E.select $ E.from $ \(t `E.InnerJoin` ta) -> do
-            E.on (t E.^. TransactionId E.==. ta E.^. TransactionAccountTransaction)
+        
+        -- ts <- handlerToWidget $ runDB $ E.select $ E.from $ \(r@(_, ta, _) `E.As` ra) -> do
+        --     E.subselect transactionQuery ra
+        --     E.where_ (ta E.^. TransactionAccountAccount E.==. E.val accountId)
+        --     return r
+
+        ts <- handlerToWidget $ runDB $ E.select $ E.fromSubSelect transactionQuery $ \(t, ta, s) -> do
             E.where_ (ta E.^. TransactionAccountAccount E.==. E.val accountId)
-            E.orderBy [E.desc (t E.^. TransactionDate), E.desc (t E.^. TransactionId)]
-            E.groupBy (t E.^. TransactionId, ta E.^. TransactionAccountId)
-            return (t, ta, E.over (E.sum_ (ta E.^. TransactionAccountAmount)) (Just $ ta E.^. TransactionAccountAccount) [E.asc (t E.^. TransactionDate), E.asc (t E.^. TransactionId)])
+            return (t, ta, E.fromAlias s)
+
+        -- E.subselect_query transactionQuery $ \r@(_, ta, _) -> do
+        --     E.where_ (ta E.^. TransactionAccountAccount E.==. E.val accountId)
+        --     return r
+
+        -- ts <- handlerToWidget $ runDB $ E.select $ E.from $ \(t `E.InnerJoin` ta) -> do
+        --     E.on (t E.^. TransactionId E.==. ta E.^. TransactionAccountTransaction)
+        --     E.where_ (ta E.^. TransactionAccountAccount E.==. E.val accountId)
+        --     E.orderBy [E.desc (t E.^. TransactionDate), E.desc (t E.^. TransactionId)]
+        --     E.groupBy (t E.^. TransactionId, ta E.^. TransactionAccountId)
+        --     return (t, ta, E.over (E.sum_ (ta E.^. TransactionAccountAmount)) (Just $ ta E.^. TransactionAccountAccount) [E.asc (t E.^. TransactionDate), E.asc (t E.^. TransactionId)])
 
         accountIsDebit <- Account.isDebit accountTree accountId
 
@@ -52,7 +66,6 @@ getAccountR = Account.layout $ \(Entity bookId book) (Entity accountId account) 
     where
         displayTransaction bookId accountIsDebit ((Entity tId t), (Entity taId ta), E.Value balance') = do
             let balance = maybe "" dollar balance'
-            -- TODO: Separate debits and credits. XXX
             [whamlet|
                 <tr>
                     <td>
@@ -68,3 +81,9 @@ getAccountR = Account.layout $ \(Entity bookId book) (Entity accountId account) 
                         #{balance}
             |]
 
+-- transactionQuery :: E.SqlQuery (E.SqlExpr (Entity Transaction), E.SqlExpr (Entity TransactionAccount), E.SqlExpr (E.Value (Maybe Nano)))
+-- transactionQuery = E.from $ \(t `E.InnerJoin` ta) -> do
+--     E.on (t E.^. TransactionId E.==. ta E.^. TransactionAccountTransaction)
+--     E.orderBy [E.desc (t E.^. TransactionDate), E.desc (t E.^. TransactionId)]
+--     E.groupBy (t E.^. TransactionId, ta E.^. TransactionAccountId)
+--     return (t, ta, E.over (E.sum_ (ta E.^. TransactionAccountAmount)) (Just $ ta E.^. TransactionAccountAccount) [E.asc (t E.^. TransactionDate), E.asc (t E.^. TransactionId)])

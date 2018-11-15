@@ -100,6 +100,7 @@ instance Yesod App where
 
     defaultLayout w = do
         p <- widgetToPageContent $ do
+            toWidget styling
             addStylesheet $ StaticR css_bootstrap_css
             addScript $ StaticR js_jquery_js
             addScript $ StaticR js_bootstrap_js
@@ -117,6 +118,12 @@ instance Yesod App where
                         <p class="message #{status}">#{msg}
                     ^{pageBody p}
             |]
+
+styling = [lucius|
+        .table-condensed > tbody > tr.transaction-rest > td {
+            border-top: 1px solid #f6f6f6;
+        }
+    |]
 
 -- Define breadcrumbs.
 instance YesodBreadcrumbs App where

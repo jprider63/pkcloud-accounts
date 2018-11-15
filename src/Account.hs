@@ -7,13 +7,24 @@ import Import
 -- TODO: Cache this, make a map, or run DB queries? Change type of account tree to be Map (Either FolderId AccountId) (Either Folder Debit, Bool)?? Then use recursive CTE query for folders/accounts?
 -- Throws permission denied if account isn't in the book's account tree.
 isDebit :: MonadHandler m => [AccountTree] -> AccountId -> m Bool
-isDebit ts aId = case getAccountNode ts aId of
+isDebit ts aId = (\(_,_,x) -> x) <$> leaf ts aId
+
+toAccountIds :: [AccountTree] -> [AccountId]
+toAccountIds = concatMap helper
+    where
+        helper :: AccountTree -> [AccountId]
+        helper (AccountLeaf (Entity aId _) _ _) = [aId]
+        helper (FolderNode _ _ _ c) = toAccountIds c
+
+leaf :: MonadHandler m => [AccountTree] -> AccountId -> m (Entity Account, Nano, Bool)
+leaf ts aId = case getAccountNode ts aId of
     Nothing ->
         permissionDenied ""
-    Just (AccountLeaf _ _ isDebit) ->
-        return isDebit
+    Just (AccountLeaf e b isDebit) ->
+        return (e, b, isDebit)
     Just (FolderNode _ _ _ _) ->
         permissionDenied "Unreachable"
+
 
 requireAllInBook :: MonadHandler m => [AccountTree] -> [AccountId] -> m ()
 requireAllInBook accountTree = mapM_ $ \aId ->
