@@ -7,7 +7,7 @@ import Import
 
 data FormData = FormData
 
-renderForm transaction = renderBootstrap3 layout $ pure FormData
+renderForm = renderBootstrap3 layout $ pure FormData
     where
         layout = BootstrapHorizontalForm (ColXs 0) (ColXs 3) (ColXs 0) (ColXs 9)
 
@@ -18,7 +18,7 @@ generateHTML bookId transactionId trees formM = do
     -- Get transaction.
     transaction <- handlerToWidget $ runDB $ get404 transactionId
 
-    (formW, enctype) <- handlerToWidget $ maybe (generateFormPost $ renderForm transaction) return formM
+    (formW, enctype) <- handlerToWidget $ maybe (generateFormPost renderForm) return formM
 
     [whamlet|
         <h2>
@@ -55,4 +55,29 @@ postTransactionDeleteR  bookId transactionId = flip Book.layout bookId $ \(Entit
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 
-    undefined
+    -- Check that all accounts are in the book.
+    -- JP: We could just check one if we have the invariant that all accounts in the transaction belong to the same book.
+    ts <- handlerToWidget $ runDB $ selectList [TransactionAccountTransaction ==. transactionId] []
+    Account.requireAllInBook accountTree $ map (\(Entity _ ta) -> transactionAccountAccount ta) $ take 1 ts
+
+    ((res, formW), formE) <- handlerToWidget $ runFormPost renderForm
+    case res of
+        FormMissing -> do
+            pkcloudSetMessageDanger "Deleting transaction failed."
+            generateHTML bookId transactionId accountTree $ Just (formW, formE)
+        FormFailure _msg -> do
+            pkcloudSetMessageDanger "Deleting transaction failed."
+            generateHTML bookId transactionId accountTree $ Just (formW, formE)
+        FormSuccess FormData -> do
+            -- Delete transaction.
+            handlerToWidget $ runDB $ do
+                deleteWhere [TransactionAccountTransaction ==. transactionId]
+                delete transactionId
+
+            -- Set message.
+            pkcloudSetMessageSuccess "Deleted transaction!"
+
+            -- Redirect.
+            redirect $ BookR bookId
+
+
