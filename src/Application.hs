@@ -47,6 +47,7 @@ import Handler.Folder.Create
 import Handler.Home
 import Handler.Transaction
 import Handler.Transaction.Create
+import Handler.Transaction.Delete
 import Handler.Transaction.Edit
 
 -- This line actually creates our YesodDispatch instance. It is the second half

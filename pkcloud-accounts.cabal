@@ -82,6 +82,7 @@ library
       Handler.Home
       Handler.Transaction
       Handler.Transaction.Create
+      Handler.Transaction.Delete
       Handler.Transaction.Edit
       Import
       Import.NoFoundation
