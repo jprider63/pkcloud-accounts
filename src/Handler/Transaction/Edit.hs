@@ -19,7 +19,9 @@ generateHTML bookId transactionId trees formM = do
         <form method=post action=@{TransactionEditR bookId transactionId} enctype=#{enctype}>
             ^{formW}
             <div .form-group>
-                <button type="submit" class="btn btn-default">
+                <a class="btn btn-default" href="@{TransactionR bookId transactionId}">
+                    Cancel
+                <button type="submit" class="btn btn-primary">
                     Edit Transaction
     |]
 

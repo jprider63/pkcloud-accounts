@@ -27,7 +27,10 @@ leaf ts aId = case getAccountNode ts aId of
 
 
 requireAllInBook :: MonadHandler m => [AccountTree] -> [AccountId] -> m ()
-requireAllInBook accountTree = mapM_ $ \aId ->
+requireAllInBook accountTree = mapM_ $ requireInBook accountTree
+
+requireInBook :: MonadHandler m => [AccountTree] -> AccountId -> m ()
+requireInBook accountTree aId = 
     unless (isInBook accountTree aId) $
         permissionDenied ""
 

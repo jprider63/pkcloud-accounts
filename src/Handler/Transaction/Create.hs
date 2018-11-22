@@ -90,6 +90,9 @@ postTransactionCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
             return $ UTCTime day time
 
 insertTransactionAccount tId accountTree (accountId, amountE) = do
+    -- Make sure account is in book.
+    lift $ Account.requireInBook accountTree accountId
+
     -- Check account type.
     isDebit <- Account.isDebit accountTree accountId
 

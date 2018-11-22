@@ -25,6 +25,8 @@ getTransactionR bookId transactionId = flip Book.layout bookId $ \(Entity bookId
     [whamlet|
         <a class="btn btn-primary pull-right" href="@{TransactionEditR bookId transactionId}">
             Edit
+        <a class="btn btn-danger pull-right" style="margin-right: 5px" href="@{TransactionDeleteR bookId transactionId}">
+            Delete
         <h2>
             Transaction
         <table .table .table-condensed>
