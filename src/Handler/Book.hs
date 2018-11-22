@@ -79,49 +79,8 @@ getBookR = Book.layout $ \(Entity bookId book) accountTree -> do
                             Credit
                         <th>
                             Balance
-                    ^{concatMap (displayTransaction accountTree bookId . reverse) ts}
+                    ^{concatMap (Account.displayTransactionRow accountTree bookId . reverse) ts}
             |]
-
-        displayTransaction accountTree bookId [] = error "unreachable"
-        displayTransaction accountTree bookId (first:rest) =
-            let f = displayRow accountTree bookId in
-            mconcat $ (f True first): map (f False) rest
-        
-        displayRow accountTree bookId displayDescription ((Entity tId t), (Entity taId ta), E.Value balance') = do
-            ((Entity aId a), _, accountIsDebit) <- Account.leaf accountTree $ transactionAccountAccount ta
-            let balance = maybe "" dollar balance'
-            [whamlet|
-                <tr .#{style}>
-                    <td>
-                        ^{desc}
-                    <td>
-                        ^{date}
-                    <td>
-                        <a href="@{AccountR bookId aId}">
-                            #{accountName a}
-                    <td>
-                        #{maybe "" dollar (Account.amountToDebit accountIsDebit $ transactionAccountAmount ta)}
-                    <td>
-                        #{maybe "" dollar (Account.amountToCredit accountIsDebit $ transactionAccountAmount ta)}
-                    <td>
-                        #{balance}
-            |]
-
-            where
-                style = if displayDescription then "transaction-first" else "transaction-rest" :: Text
-                desc = if displayDescription then [whamlet|
-                        <a href="@{TransactionR bookId tId}">
-                            #{transactionDescription t}
-                      |]
-                    else
-                      mempty
-
-                date = if displayDescription then [whamlet|
-                        #{shortDateTime (transactionDate t)}
-                      |]
-                    else
-                        mempty
-                        
 
         featuredW :: BookId -> [AccountTree] -> Widget
         featuredW bookId tree =

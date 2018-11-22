@@ -56,26 +56,8 @@ getAccountR = Account.layout $ \(Entity bookId book) (Entity accountId account) 
                         Credit
                     <th>
                         Balance
-                ^{concatMap (displayTransaction bookId accountIsDebit) ts}
+                ^{concatMap (Account.displayTransactionRow' accountTree bookId False . return) ts}
         |]
-
-    where
-        displayTransaction bookId accountIsDebit ((Entity tId t), (Entity taId ta), E.Value balance') = do
-            let balance = maybe "" dollar balance'
-            [whamlet|
-                <tr>
-                    <td>
-                        <a href="@{TransactionR bookId tId}">
-                            #{transactionDescription t}
-                    <td>
-                        #{shortDateTime (transactionDate t)}
-                    <td>
-                        #{maybe "" dollar (Account.amountToDebit accountIsDebit $ transactionAccountAmount ta)}
-                    <td>
-                        #{maybe "" dollar (Account.amountToCredit accountIsDebit $ transactionAccountAmount ta)}
-                    <td>
-                        #{balance}
-            |]
 
 -- transactionQuery :: E.SqlQuery (E.SqlExpr (Entity Transaction), E.SqlExpr (Entity TransactionAccount), E.SqlExpr (E.Value (Maybe Nano)))
 -- transactionQuery = E.from $ \(t `E.InnerJoin` ta) -> do

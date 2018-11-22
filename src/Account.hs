@@ -68,3 +68,56 @@ layout f bookId accountId = do
             -- CPS for widget.
             f bookE (Entity accountId account) accountTree
 
+displayTransactionRow :: [AccountTree] -> BookId -> [(Entity Transaction, Entity TransactionAccount, E.Value (Maybe Nano))] -> Widget
+displayTransactionRow a b x = displayTransactionRow' a b True x
+
+displayTransactionRow' :: [AccountTree] -> BookId -> Bool -> [(Entity Transaction, Entity TransactionAccount, E.Value (Maybe Nano))] -> Widget
+displayTransactionRow' _ _ _ [] = mempty -- "No transactions"??
+displayTransactionRow' accountTree bookId showAccountName (first:rest) = 
+    let f = displayRow accountTree bookId in
+    mconcat $ (f True first): map (f False) rest
+
+    where
+        displayRow accountTree bookId displayDescription ((Entity tId t), (Entity taId ta), (E.Value balanceM)) = do
+            ((Entity aId a), _, accountIsDebit) <- Account.leaf accountTree $ transactionAccountAccount ta
+            let balanceH = maybe mempty (\d -> [shamlet|
+                    <td>
+                        #{dollar d}
+                  |]) balanceM
+            [whamlet|
+                <tr .#{style}>
+                    <td>
+                        ^{desc}
+                    <td>
+                        ^{date}
+                    ^{account aId a}
+                    <td>
+                        #{maybe "" dollar (Account.amountToDebit accountIsDebit $ transactionAccountAmount ta)}
+                    <td>
+                        #{maybe "" dollar (Account.amountToCredit accountIsDebit $ transactionAccountAmount ta)}
+                    #{balanceH}
+            |]
+
+            where
+                account aId a = if showAccountName then
+                        [whamlet|
+                            <td>
+                                <a href="@{AccountR bookId aId}">
+                                    #{accountName a}
+                        |]
+                    else
+                        mempty
+                style = if displayDescription then "transaction-first" else "transaction-rest" :: Text
+                desc = if displayDescription then [whamlet|
+                          <a href="@{TransactionR bookId tId}">
+                              #{transactionDescription t}
+                        |]
+                       else
+                         mempty
+
+                date = if displayDescription then [whamlet|
+                           #{shortDateTime (transactionDate t)}
+                         |]
+                       else
+                           mempty
+                        

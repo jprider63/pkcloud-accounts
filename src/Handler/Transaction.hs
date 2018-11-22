@@ -10,14 +10,13 @@ getTransactionR bookId transactionId = flip Book.layout bookId $ \(Entity bookId
     setTitle $ toHtml ("Transaction" :: Text)
         
     -- JP: Make a Transaction.layout function?
-    ts <- handlerToWidget $ runDB $ E.select $ E.from $ \(t `E.InnerJoin` ta `E.InnerJoin` a) -> do
-        E.on (a E.^. AccountId E.==. ta E.^. TransactionAccountAccount)
+    ts <- handlerToWidget $ runDB $ E.select $ E.from $ \(t `E.InnerJoin` ta) -> do
         E.on (t E.^. TransactionId E.==. ta E.^. TransactionAccountTransaction)
         E.where_ (t E.^. TransactionId E.==. E.val transactionId)
         -- E.orderBy [E.desc (t E.^. TransactionDate), E.desc (t E.^. TransactionId)]
         E.orderBy [E.asc (ta E.^. TransactionAccountId)]
         -- E.groupBy (t E.^. TransactionId, ta E.^. TransactionAccountId)
-        return (t, ta, a)
+        return (t, ta, E.val Nothing)
 
     -- Check that the accounts are in the book.
     -- JP: We could just check one if we have the invariant that all accounts in the transaction belong to the same book.
@@ -40,7 +39,7 @@ getTransactionR bookId transactionId = flip Book.layout bookId $ \(Entity bookId
                     Debit
                 <th>
                     Credit
-            ^{concatMap (displayTransactionRow bookId accountTree) ts}
+            ^{Account.displayTransactionRow accountTree bookId ts}
     |]
 
     where
