@@ -43,14 +43,10 @@ getBookR = Book.layout $ \(Entity bookId book) accountTree -> do
     [whamlet|
         <h2>
             Overview
-        <div>
-            <a .btn .btn-primary href="@{TransactionCreateR bookId}" .pull-right>
-                New Transaction
-        <div .clearfix>
         <h2>
             Featured Accounts
         <div>
-            ^{filteredW accountTree}
+            ^{featuredW bookId accountTree}
         <h2>
             Recent Transactions
         <div>
@@ -127,18 +123,15 @@ getBookR = Book.layout $ \(Entity bookId book) accountTree -> do
                         mempty
                         
 
-        filteredW :: [AccountTree] -> Widget
-        filteredW tree =
+        featuredW :: BookId -> [AccountTree] -> Widget
+        featuredW bookId tree =
             case catMaybes $ map filterFeatured tree of
                 [] ->
                     [whamlet|
                         No featured accounts.
                     |]
                 tree -> 
-                    [whamlet|
-                        <ul>
-                            ^{concatMap displayFeatured tree}
-                    |]
+                    Book.displayAccountTrees bookId tree
 
             
         -- Filter out unfeatured accounts.
@@ -155,17 +148,4 @@ getBookR = Book.layout $ \(Entity bookId book) accountTree -> do
                 Just leaf
             else
                 Nothing
-
-        displayFeatured (FolderNode (Entity folderId folder) balance isDebit children) = [whamlet|
-            <li>
-                #{folderAccountName folder} - #{dollar balance}
-                <ul>
-                    ^{concatMap displayFeatured children}
-        |]
-
-        displayFeatured (AccountLeaf (Entity accountId account) balance isDebit) = 
-            [whamlet|
-                <li>
-                    #{accountName account} - #{dollar balance}
-            |]
 

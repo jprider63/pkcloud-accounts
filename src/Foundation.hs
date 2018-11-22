@@ -123,6 +123,55 @@ styling = [lucius|
         .table-condensed > tbody > tr.transaction-rest > td {
             border-top: 1px solid #f6f6f6;
         }
+
+        .badge-balance {
+            background-color: transparent;
+            color: #777;
+        }
+
+        .list-group-collapse {
+            border: 1px solid #e3e3e3;
+            border-radius: 4px;
+        }
+
+        .list-group.list-group-collapse .list-group-item {
+            border-radius: 0px;
+            border-bottom-width: 0px;
+            border-left-width: 0px;
+            border-right-width: 0px;
+        }
+
+        .list-group.list-group-collapse > .list-group-item:first-child {
+            border-top-width: 0px;
+        }
+
+        .list-group.list-group-collapse .list-group {
+            margin-bottom: 0px;
+        }
+
+        .list-group.list-group-collapse > .list-group > .list-group-item {
+            padding-left: 30px;
+        }
+
+        .list-group.list-group-collapse > .list-group > .list-group > .list-group-item {
+            padding-left: 45px;
+        }
+
+        .list-group.list-group-collapse > .list-group > .list-group > .list-group > .list-group-item {
+            padding-left: 60px;
+        }
+
+        .list-group.list-group-collapse > .list-group > .list-group > .list-group > .list-group > .list-group-item {
+            padding-left: 75px;
+        }
+
+        .list-group.list-group-collapse > .list-group > .list-group > .list-group > .list-group > .list-group > .list-group-item {
+            padding-left: 90px;
+        }
+
+        .list-group.list-group-collapse > .list-group > .list-group > .list-group > .list-group > .list-group > .list-group > .list-group-item {
+            padding-left: 105px;
+        }
     |]
 
 -- Define breadcrumbs.

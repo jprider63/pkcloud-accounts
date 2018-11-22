@@ -77,27 +77,17 @@ layout w bookId = do
                         Overview
                 <h2>
                     Accounts
-                <a href="@{AccountCreateR bookId}" .btn .pull-right>
+                ^{displayAccountTrees bookId trees}
+                <a .btn .btn-primary .btn-block href="@{TransactionCreateR bookId}">
+                    New Transaction
+                <a href="@{AccountCreateR bookId}" .btn .btn-primary .btn-block>
                     New Account
-                <a href="@{FolderCreateR bookId}" .btn .pull-right>
+                <a href="@{FolderCreateR bookId}" .btn .btn-primary .btn-block>
                     New Folder
-                ^{concatMap sidebarAccountTree trees}
+                <a href="@{BooksR}" .btn .btn-default .btn-block>
+                    Other Books
         |]
-
-        sidebarAccountTree (FolderNode (Entity folderId folder) balance isDebit children) =
-            [whamlet|
-                <li>
-                    #{folderAccountName folder} - #{dollar balance}
-                    <ul>
-                        ^{concatMap sidebarAccountTree children}
-            |]
-        sidebarAccountTree (AccountLeaf (Entity accountId account) balance isDebit) =
-            [whamlet|
-                <li>
-                    <a href="@{AccountR bookId accountId}">
-                        #{accountName account}
-                    - #{dollar balance}
-            |]
+        -- Book Settings?
 
 accountTrees :: BookId -> Handler [AccountTree]
 accountTrees bookId = runDB $ do
@@ -142,3 +132,29 @@ folderAccountTree (folderE@(Entity fId _), isDebit) = do
                 [E.Value (Just x)] -> return x
                 _ -> return 0
         
+displayAccountTrees :: BookId -> [AccountTree] -> Widget
+displayAccountTrees bookId trees = [whamlet|
+        <ul .list-group .list-group-collapse>
+            ^{concatMap sidebarAccountTree trees}
+    |]
+
+    where
+        
+        -- https://stackoverflow.com/a/33571268
+        sidebarAccountTree (FolderNode (Entity folderId folder) balance isDebit children) =
+            [whamlet|
+                <a .list-group-item href="#TODO">
+                    #{folderAccountName folder}
+                    <span .badge .badge-balance>
+                        #{dollar balance}
+                <ul .list-group>
+                    ^{concatMap sidebarAccountTree children}
+            |]
+        sidebarAccountTree (AccountLeaf (Entity accountId account) balance isDebit) =
+            [whamlet|
+                <a .list-group-item href="@{AccountR bookId accountId}">
+                    #{accountName account}
+                    <span .badge .badge-balance>
+                        #{dollar balance}
+            |]
+

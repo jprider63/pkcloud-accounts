@@ -8,7 +8,6 @@ import Import
 getTransactionR :: BookId -> TransactionId -> Handler Html
 getTransactionR bookId transactionId = flip Book.layout bookId $ \(Entity bookId book) accountTree -> do
     setTitle $ toHtml ("Transaction" :: Text)
-    -- TODO: Edit button XXX
         
     -- JP: Make a Transaction.layout function?
     ts <- handlerToWidget $ runDB $ E.select $ E.from $ \(t `E.InnerJoin` ta `E.InnerJoin` a) -> do

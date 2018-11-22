@@ -42,10 +42,6 @@ getAccountR = Account.layout $ \(Entity bookId book) (Entity accountId account) 
                 #{accountName account}
                 <small>
                     #{accountType} Account
-            <div>
-                <a .btn .btn-primary href="@{TransactionCreateR bookId}?account=#{fromSqlKey accountId}" .pull-right>
-                    New Transaction
-            <div .clearfix>
             <h2>
                 Transactions
             <table .table .table-condensed>
