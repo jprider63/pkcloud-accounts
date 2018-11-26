@@ -37,6 +37,7 @@ generateHTML bookId transactionId trees formM = do
                 return (t, e)
 
             -- -- Check permission on all accounts.
+            -- -- JP: We could just check one if we have the invariant that all accounts in the transaction belong to the same book.
             -- Account.requireAllInBook trees $ map (transactionAccountAccount . entityVal) $ take 1 entries
 
             -- Return transaction and entries. Implicitly checks if account is in book.

@@ -44,25 +44,5 @@ getTransactionR bookId transactionId = flip Book.layout bookId $ \(Entity bookId
             ^{Account.displayTransactionRow accountTree bookId ts}
     |]
 
-    where
-        -- TODO: Don't display description and date multiple times.
         -- TODO: Separate debits and credits. Lookup accounts from account tree? XXX
-        displayTransactionRow bookId accountTree ((Entity tId t), (Entity taId ta), (Entity aId a)) = do
-            accountIsDebit <- Account.isDebit accountTree aId
-
-            -- let balance = maybe "" dollar balance'
-            [whamlet|
-                <tr>
-                    <td>
-                        #{transactionDescription t}
-                    <td>
-                        #{shortDateTime (transactionDate t)}
-                    <td>
-                        <a href="@{AccountR bookId $ transactionAccountAccount ta}">
-                            #{accountName a}
-                    <td>
-                        #{maybe "" dollar (Account.amountToDebit accountIsDebit $ transactionAccountAmount ta)}
-                    <td>
-                        #{maybe "" dollar (Account.amountToCredit accountIsDebit $ transactionAccountAmount ta)}
-            |]
         

@@ -15,6 +15,12 @@ generateHTML :: BookId -> TransactionId -> [AccountTree] -> Maybe (Widget, Encty
 generateHTML bookId transactionId trees formM = do
     setTitle $ toHtml ("Delete Transaction" :: Text)
 
+    -- Check that all accounts are in the book.
+    -- JP: We could just check one if we have the invariant that all accounts in the transaction belong to the same book.
+    ts <- handlerToWidget $ runDB $ selectList [TransactionAccountTransaction ==. transactionId] []
+    Account.requireAllInBook trees $ map (\(Entity _ ta) -> transactionAccountAccount ta) $ take 1 ts
+
+    ((res, formW), formE) <- handlerToWidget $ runFormPost renderForm
     -- Get transaction.
     transaction <- handlerToWidget $ runDB $ get404 transactionId
 
