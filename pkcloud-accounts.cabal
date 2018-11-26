@@ -78,7 +78,9 @@ library
       Handler.Book
       Handler.Books
       Handler.Common
+      Handler.Folder
       Handler.Folder.Create
+      Handler.Folder.Edit
       Handler.Home
       Handler.Transaction
       Handler.Transaction.Create

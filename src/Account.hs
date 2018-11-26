@@ -50,6 +50,17 @@ amountToCredit True x | x < 0 = Just $ negate x
 amountToCredit False x | x >= 0 = Just x
 amountToCredit _ _ = Nothing
 
+requireFolder :: MonadHandler m => [AccountTree] -> FolderAccountId -> m AccountTree
+requireFolder a f = case getFolderNode a f of
+    Just x -> return x
+    Nothing -> permissionDenied ""
+
+getFolderNode :: [AccountTree] -> FolderAccountId -> Maybe AccountTree
+getFolderNode [] _ = Nothing
+getFolderNode (node@(FolderNode (Entity fId' _) _ _ _):ts) fId | fId == fId' = Just node
+getFolderNode ((FolderNode _ _ _ children):ts) fId = getFolderNode (children ++ ts) fId
+getFolderNode ((AccountLeaf _ _ _):ts) fId = getFolderNode ts fId
+
 getAccountNode :: [AccountTree] -> AccountId -> Maybe AccountTree
 getAccountNode [] aId = Nothing
 getAccountNode ((leaf@(AccountLeaf (Entity aId' _) _ _)):ts) aId | aId == aId' = Just leaf

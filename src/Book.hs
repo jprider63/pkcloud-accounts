@@ -143,7 +143,7 @@ displayAccountTrees bookId trees = [whamlet|
         -- https://stackoverflow.com/a/33571268
         sidebarAccountTree (FolderNode (Entity folderId folder) balance isDebit children) =
             [whamlet|
-                <a .list-group-item href="#TODO">
+                <a .list-group-item href="@{FolderR bookId folderId}">
                     #{folderAccountName folder}
                     <span .badge .badge-balance>
                         #{dollar balance}

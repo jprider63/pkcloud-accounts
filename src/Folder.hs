@@ -1,5 +1,6 @@
 module Folder where
 
+import qualified Account
 import qualified Book
 import Import
 
@@ -25,3 +26,10 @@ treesToAccounts trees = concatMap (toAccounts "") trees
             [(path <> accountName account, accountId)]
 
         spacingChar = ":"
+
+layout :: (Entity Book -> [AccountTree] -> AccountTree -> Widget) -> BookId -> FolderAccountId -> Handler Html
+layout f bookId fId = flip Book.layout bookId $ \bookE accountTree -> do
+    -- Load folder (and check that folder is in book).
+    folder <- Account.requireFolder accountTree fId
+
+    f bookE accountTree folder
