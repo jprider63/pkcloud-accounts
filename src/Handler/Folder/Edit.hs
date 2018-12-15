@@ -93,9 +93,23 @@ postFolderEditR = Folder.layout $ \(Entity bookId book) accountTree (FolderNode 
             pkcloudSetMessageDanger "Editing folder failed."
             generateHTML bookId folderE isDebit children accountTree $ Just (formW, formE)
         FormSuccess (FormData name parentM) -> do
-            error "TODO"
-            -- If there's a parent, delete root (if it exists)
-            -- If there's no parent, create a root (if it doesn't exist)
+            handlerToWidget $ runDB $ do
+                case parentM of
+                    Nothing -> do
+                        -- If there's no parent, create a root (if it doesn't exist).
+                        _ <- insertUnique $ BookFolderAccount bookId faId isDebit
+                        return ()
 
+                    Just _ ->
+                        -- If there's a parent, delete root (if it exists).
+                        deleteBy $ UniqueBookFolder bookId faId
 
-    
+                -- Update name and parent.
+                update faId [FolderAccountName =. name, FolderAccountParent =. parentM]
+
+            -- Set message.
+            pkcloudSetMessageSuccess "Edited folder!"
+
+            -- Redirect.
+            redirect $ FolderR bookId faId
+
