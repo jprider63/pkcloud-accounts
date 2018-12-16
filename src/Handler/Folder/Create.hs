@@ -11,11 +11,11 @@ data FormData = FormData {
 
 renderForm trees = renderBootstrap3 BootstrapBasicForm $ FormData
     <$> areq textField folderSettings Nothing
-    <*> areq (eitherField ("Child folder", parentSettings, selectFieldList folders) ("Root folder", typeSettings, bootstrapRadioFieldList [("Debit" :: Text, True),("Credit", False)])) eitherSettings Nothing
+    <*> areq (eitherField "Root folder" (parentSettings, selectFieldList folders) (typeSettings, bootstrapRadioFieldList [("Debit" :: Text, True),("Credit", False)])) eitherSettings Nothing
 
     where
         folderSettings = withPlaceholder "Name" $ bfs ("Folder Name" :: Text)
-        eitherSettings = "Folder type" -- bfs ("Folder type" :: Text)
+        eitherSettings = "Root Folder" -- bfs ("Folder type" :: Text)
 
         parentSettings = bfs ("Parent" :: Text)
         typeSettings = "Account type" -- bfs ("Account type" :: Text)
@@ -55,4 +55,20 @@ postFolderCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
         FormFailure _msg -> do
             pkcloudSetMessageDanger "Creating folder failed."
             generateHTML bookId accountTree $ Just (formW, formE)
-        FormSuccess _ -> undefined
+        FormSuccess (FormData name parentE) -> do
+            handlerToWidget $ runDB $ do
+                let parent = either Just (const Nothing) parentE
+                let isDebit = either (const False) id parentE
+
+                -- Insert folder.
+                folderId <- insert $ FolderAccount name parent
+
+                -- Insert root if necessary.
+                when (isNothing parent) $
+                    insert_ $ BookFolderAccount bookId folderId isDebit
+
+            -- Set message.
+            pkcloudSetMessageSuccess "Created folder!"
+
+            -- Redirect.
+            redirect $ FolderCreateR bookId
