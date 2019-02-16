@@ -80,6 +80,7 @@ library
       Handler.Common
       Handler.Folder
       Handler.Folder.Create
+      Handler.Folder.Delete
       Handler.Folder.Edit
       Handler.Home
       Handler.Transaction

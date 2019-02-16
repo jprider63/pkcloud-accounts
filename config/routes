@@ -10,6 +10,7 @@
 /book/#BookId/account/#AccountId AccountR GET
 /book/#BookId/accounts/new AccountCreateR GET POST
 /book/#BookId/folder/#FolderAccountId FolderR GET
+/book/#BookId/folder/#FolderAccountId/delete FolderDeleteR GET POST
 /book/#BookId/folder/#FolderAccountId/edit FolderEditR GET POST
 /book/#BookId/folders/new FolderCreateR GET POST
 /book/#BookId/transaction/#TransactionId TransactionR GET

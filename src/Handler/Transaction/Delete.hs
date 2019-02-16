@@ -29,7 +29,7 @@ generateHTML bookId transactionId trees formM = do
     [whamlet|
         <h2>
             Delete Transaction
-        <form .form-horizontal method=post action=@{TransactionDeleteR bookId transactionId} enctype=#{enctype}>
+        <form .form-horizontal method=post action="@{TransactionDeleteR bookId transactionId}" enctype=#{enctype}>
             ^{formW}
             <div .form-group>
                 <label .col-xs-2 .control-label>

@@ -45,6 +45,7 @@ import Handler.Books
 import Handler.Common
 import Handler.Folder
 import Handler.Folder.Create
+import Handler.Folder.Delete
 import Handler.Folder.Edit
 import Handler.Home
 import Handler.Transaction

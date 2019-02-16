@@ -24,7 +24,7 @@ getFolderR = Folder.layout $ \(Entity bookId book) accountTree (FolderNode (Enti
     [whamlet|
         <a class="btn btn-primary pull-right" href="@{FolderEditR bookId faId}">
             Edit
-        <a class="btn btn-danger pull-right" style="margin-right: 5px" href="#TODO">
+        <a class="btn btn-danger pull-right" style="margin-right: 5px" href="@{FolderDeleteR bookId faId}">
             Delete
 
         <h2>
