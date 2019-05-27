@@ -38,7 +38,7 @@ getAccountR = Account.layout $ \(Entity bookId book) (Entity accountId account) 
     [whamlet|
         <a class="btn btn-primary pull-right" href="@{AccountEditR bookId accountId}">
             Edit
-        <a class="btn btn-danger pull-right" style="margin-right: 5px" href="#Todo">
+        <a class="btn btn-danger pull-right" style="margin-right: 5px" href="@{AccountDeleteR bookId accountId}">
             Delete
         <h2>
             #{accountName account}
