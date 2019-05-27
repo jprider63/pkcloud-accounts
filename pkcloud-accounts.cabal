@@ -75,7 +75,10 @@ library
       Foundation
       Handler.Account
       Handler.Account.Create
+      Handler.Account.Delete
+      Handler.Account.Edit
       Handler.Book
+      Handler.Book.Settings
       Handler.Books
       Handler.Common
       Handler.Folder

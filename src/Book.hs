@@ -84,6 +84,8 @@ layout w bookId = do
                     New Account
                 <a href="@{FolderCreateR bookId}" .btn .btn-primary .btn-block>
                     New Folder
+                <a href="@{BookSettingsR bookId}" .btn .btn-default .btn-block>
+                    Settings
                 <a href="@{BooksR}" .btn .btn-default .btn-block>
                     Other Books
         |]

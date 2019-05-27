@@ -10,10 +10,10 @@ data FormData = FormData {
     , formDataFeatured :: Bool
     } 
 
-renderForm trees = renderBootstrap3 BootstrapBasicForm $ FormData
-    <$> areq textField accountSettings Nothing
-    <*> areq (selectFieldList folders) parentSettings Nothing
-    <*> areq checkBoxField featuredSettings Nothing -- TODO: Switch to bootstrapCheckBoxField XXX
+renderForm trees parentF accountM = renderBootstrap3 BootstrapBasicForm $ FormData
+    <$> areq textField accountSettings (accountName <$> accountM)
+    <*> areq (parentF $ selectFieldList folders) parentSettings (accountParent <$> accountM)
+    <*> areq checkBoxField featuredSettings (accountFeatured <$> accountM) -- TODO: Switch to bootstrapCheckBoxField XXX
 
     where
         accountSettings = withPlaceholder "Account" $ bfs ("Account Name" :: Text)
@@ -26,7 +26,7 @@ generateHTML :: BookId -> [AccountTree] -> Maybe (Widget, Enctype) -> Widget
 generateHTML bookId trees formM = do
     setTitle $ toHtml ("New Account" :: Text)
 
-    (formW, enctype) <- handlerToWidget $ maybe (generateFormPost $ renderForm trees) return formM
+    (formW, enctype) <- handlerToWidget $ maybe (generateFormPost $ renderForm trees id Nothing) return formM
 
     --     ^{msgH}
     [whamlet|
@@ -48,7 +48,7 @@ postAccountCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 
-    ((res, formW), formE) <- handlerToWidget $ runFormPost $ renderForm accountTree
+    ((res, formW), formE) <- handlerToWidget $ runFormPost $ renderForm accountTree id Nothing
     case res of
         FormMissing -> do
             pkcloudSetMessageDanger "Creating account failed."

@@ -40,7 +40,10 @@ import System.Log.FastLogger                (defaultBufSize, newStdoutLoggerSet,
 -- Don't forget to add new modules to your cabal file!
 import Handler.Account
 import Handler.Account.Create
+import Handler.Account.Delete
+import Handler.Account.Edit
 import Handler.Book
+import Handler.Book.Settings
 import Handler.Books
 import Handler.Common
 import Handler.Folder

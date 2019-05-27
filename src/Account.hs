@@ -67,7 +67,7 @@ getAccountNode ((leaf@(AccountLeaf (Entity aId' _) _ _)):ts) aId | aId == aId' =
 getAccountNode ((AccountLeaf _ _ _):ts) aId = getAccountNode ts aId
 getAccountNode ((FolderNode _ _ _ children):ts) aId = getAccountNode (children ++ ts) aId
 
-layout :: (Entity Book -> Entity Account -> [AccountTree] -> Widget) -> BookId -> AccountId -> Handler Html
+layout :: (Entity Book -> Entity Account -> Bool -> [AccountTree] -> Widget) -> BookId -> AccountId -> Handler Html
 layout f bookId accountId = do
     account <- runDB $ get404 accountId
 
@@ -79,8 +79,11 @@ layout f bookId accountId = do
             unless (isInBook accountTree accountId) $ 
                 permissionDenied ""
             
+            -- Get account type.
+            accountIsDebit <- Account.isDebit accountTree accountId
+
             -- CPS for widget.
-            f bookE (Entity accountId account) accountTree
+            f bookE (Entity accountId account) accountIsDebit accountTree
 
 displayTransactionRow :: [AccountTree] -> BookId -> [(Entity Transaction, Entity TransactionAccount, E.Value (Maybe Nano))] -> Widget
 displayTransactionRow a b x = displayTransactionRow' a b True x

@@ -4,10 +4,13 @@
 / HomeR GET
 
 /book/#BookId BookR GET
+/book/#BookId/settings BookSettingsR GET
 /books BooksR GET
 /books/new BookCreateR POST
 
 /book/#BookId/account/#AccountId AccountR GET
+/book/#BookId/account/#AccountId/delete AccountDeleteR GET POST
+/book/#BookId/account/#AccountId/edit AccountEditR GET POST
 /book/#BookId/accounts/new AccountCreateR GET POST
 /book/#BookId/folder/#FolderAccountId FolderR GET
 /book/#BookId/folder/#FolderAccountId/delete FolderDeleteR GET POST
