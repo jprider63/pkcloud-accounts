@@ -53,3 +53,12 @@ TransactionAccount
   transaction TransactionId
   account AccountId
   amount Nano
+
+FrequentTransaction
+  book BookId
+  description Text
+
+FrequentTransactionAccount
+  transaction FrequentTransactionId
+  account AccountId
+  amount

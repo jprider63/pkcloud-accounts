@@ -44,6 +44,8 @@ import Handler.Account.Delete
 import Handler.Account.Edit
 import Handler.Book
 import Handler.Book.Settings
+import Handler.Book.Settings.FrequentTransaction
+import Handler.Book.Settings.FrequentTransaction.Create
 import Handler.Books
 import Handler.Common
 import Handler.Folder

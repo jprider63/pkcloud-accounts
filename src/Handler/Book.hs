@@ -43,11 +43,11 @@ getBookR = Book.layout $ \(Entity bookId book) accountTree -> do
     [whamlet|
         <h2>
             Overview
-        <h2>
+        <h3>
             Featured Accounts
         <div>
             ^{featuredW bookId accountTree}
-        <h2>
+        <h3>
             Recent Transactions
         <div>
             ^{recentW accountTree bookId}

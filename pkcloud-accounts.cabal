@@ -79,6 +79,8 @@ library
       Handler.Account.Edit
       Handler.Book
       Handler.Book.Settings
+      Handler.Book.Settings.FrequentTransaction
+      Handler.Book.Settings.FrequentTransaction.Create
       Handler.Books
       Handler.Common
       Handler.Folder
