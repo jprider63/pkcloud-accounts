@@ -57,8 +57,10 @@ TransactionAccount
 FrequentTransaction
   book BookId
   description Text
+  createdBy UserId
 
 FrequentTransactionAccount
   transaction FrequentTransactionId
   account AccountId
-  amount
+  amount Nano
+

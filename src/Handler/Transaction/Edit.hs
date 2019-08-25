@@ -82,7 +82,7 @@ postTransactionEditR  bookId transactionId = flip Book.layout bookId $ \(Entity 
                 deleteWhere [TransactionAccountTransaction ==. transactionId]
 
                 -- Insert transaction amounts.
-                mapM_ (insertTransactionAccount transactionId accountTree) entries
+                mapM_ (insertTransactionAccount TransactionAccount transactionId accountTree) entries
 
                 -- Update transaction.
                 update transactionId [TransactionDescription =. description, TransactionDate =. date]

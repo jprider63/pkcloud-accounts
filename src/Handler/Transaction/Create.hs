@@ -71,7 +71,7 @@ postTransactionCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
                 transactionId <- insert $ Transaction description date uId
 
                 -- Insert transaction amounts.
-                mapM_ (insertTransactionAccount transactionId accountTree) entries
+                mapM_ (insertTransactionAccount TransactionAccount transactionId accountTree) entries
 
             -- Set message.
             pkcloudSetMessageSuccess "Created transaction!"
@@ -84,7 +84,7 @@ postTransactionCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
             (UTCTime _ time) <- getCurrentTime
             return $ UTCTime day time
 
-insertTransactionAccount tId accountTree (accountId, amountE) = do
+insertTransactionAccount taConstr tId accountTree (accountId, amountE) = do
     -- Make sure account is in book.
     lift $ Account.requireInBook accountTree accountId
 
@@ -95,7 +95,7 @@ insertTransactionAccount tId accountTree (accountId, amountE) = do
     let amount = toAmount isDebit amountE
     
     -- Insert transaction.
-    insert_ $ TransactionAccount tId accountId amount
+    insert_ $ taConstr tId accountId amount
 
     where
 
