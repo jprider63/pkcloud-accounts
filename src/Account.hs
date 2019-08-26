@@ -3,6 +3,7 @@ module Account where
 import qualified Book
 import qualified Database.Esqueleto as E
 import Import
+import Types.Classes
 
 -- TODO: Cache this, make a map, or run DB queries? Change type of account tree to be Map (Either FolderId AccountId) (Either Folder Debit, Bool)?? Then use recursive CTE query for folders/accounts?
 -- Throws permission denied if account isn't in the book's account tree.
@@ -85,10 +86,10 @@ layout f bookId accountId = do
             -- CPS for widget.
             f bookE (Entity accountId account) accountIsDebit accountTree
 
-displayTransactionRow :: [AccountTree] -> BookId -> [(Entity Transaction, Entity TransactionAccount, E.Value (Maybe Nano))] -> Widget
+displayTransactionRow :: (GeneralizedTransaction t, GeneralizedTransactionAccount ta) => [AccountTree] -> BookId -> [(Entity t, Entity ta, E.Value (Maybe Nano))] -> Widget
 displayTransactionRow a b x = displayTransactionRow' a b True x
 
-displayTransactionRow' :: [AccountTree] -> BookId -> Bool -> [(Entity Transaction, Entity TransactionAccount, E.Value (Maybe Nano))] -> Widget
+displayTransactionRow' :: (GeneralizedTransaction t, GeneralizedTransactionAccount ta) => [AccountTree] -> BookId -> Bool -> [(Entity t, Entity ta, E.Value (Maybe Nano))] -> Widget
 displayTransactionRow' _ _ _ [] = mempty -- "No transactions"??
 displayTransactionRow' accountTree bookId showAccountName (first:rest) = 
     let f = displayRow accountTree bookId in
@@ -96,7 +97,7 @@ displayTransactionRow' accountTree bookId showAccountName (first:rest) =
 
     where
         displayRow accountTree bookId displayDescription ((Entity tId t), (Entity taId ta), (E.Value balanceM)) = do
-            ((Entity aId a), _, accountIsDebit) <- Account.leaf accountTree $ transactionAccountAccount ta
+            ((Entity aId a), _, accountIsDebit) <- Account.leaf accountTree $ gTransactionAccountAccount ta
             let balanceH = maybe mempty (\d -> [shamlet|
                     <td>
                         #{dollar d}
@@ -105,13 +106,12 @@ displayTransactionRow' accountTree bookId showAccountName (first:rest) =
                 <tr .#{style}>
                     <td>
                         ^{desc}
-                    <td>
-                        ^{date}
+                    ^{date}
                     ^{account aId a}
                     <td>
-                        #{maybe "" dollar (Account.amountToDebit accountIsDebit $ transactionAccountAmount ta)}
+                        #{maybe "" dollar (Account.amountToDebit accountIsDebit $ gTransactionAccountAmount ta)}
                     <td>
-                        #{maybe "" dollar (Account.amountToCredit accountIsDebit $ transactionAccountAmount ta)}
+                        #{maybe "" dollar (Account.amountToCredit accountIsDebit $ gTransactionAccountAmount ta)}
                     #{balanceH}
             |]
 
@@ -126,15 +126,22 @@ displayTransactionRow' accountTree bookId showAccountName (first:rest) =
                         mempty
                 style = if displayDescription then "transaction-first" else "transaction-rest" :: Text
                 desc = if displayDescription then [whamlet|
-                          <a href="@{TransactionR bookId tId}">
-                              #{transactionDescription t}
+                          <a href="@{gTransactionRoute bookId tId}">
+                              #{gTransactionDescription t}
                         |]
                        else
                          mempty
 
-                date = if displayDescription then [whamlet|
-                           #{shortDateTime (transactionDate t)}
-                         |]
-                       else
-                           mempty
+                date = case gTransactionDate t of
+                    Nothing -> 
+                        mempty
+                    Just d -> 
+                        if displayDescription then [whamlet|
+                            <td>
+                              #{shortDateTime d}
+                          |] 
+                        else
+                          [whamlet|
+                            <td>
+                          |]
                         
