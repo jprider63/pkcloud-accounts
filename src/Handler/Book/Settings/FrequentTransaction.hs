@@ -24,9 +24,9 @@ getBookSettingsFrequentR bookId ftId = flip Book.layout bookId $ \(Entity bookId
     Account.requireAllInBook accountTree $ map (\(_, (Entity _ ta), _) -> frequentTransactionAccountAccount ta) $ take 1 ts
 
     [whamlet|
-        <a class="btn btn-primary pull-right" href="FrequentTransactionEditR bookId transactionId">
+        <a class="btn btn-primary pull-right" href="@{BookSettingsFrequentEditR bookId ftId}">
             Edit
-        <a class="btn btn-danger pull-right" style="margin-right: 5px" href="FrequentTransactionDeleteR bookId transactionId">
+        <a class="btn btn-danger pull-right" style="margin-right: 5px" href="@{BookSettingsFrequentDeleteR bookId ftId}">
             Delete
         <h2>
             Frequent Transaction

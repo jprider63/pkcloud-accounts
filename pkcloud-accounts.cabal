@@ -81,6 +81,8 @@ library
       Handler.Book.Settings
       Handler.Book.Settings.FrequentTransaction
       Handler.Book.Settings.FrequentTransaction.Create
+      Handler.Book.Settings.FrequentTransaction.Delete
+      Handler.Book.Settings.FrequentTransaction.Edit
       Handler.Books
       Handler.Common
       Handler.Folder

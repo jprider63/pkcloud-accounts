@@ -46,6 +46,8 @@ import Handler.Book
 import Handler.Book.Settings
 import Handler.Book.Settings.FrequentTransaction
 import Handler.Book.Settings.FrequentTransaction.Create
+import Handler.Book.Settings.FrequentTransaction.Delete
+import Handler.Book.Settings.FrequentTransaction.Edit
 import Handler.Books
 import Handler.Common
 import Handler.Folder

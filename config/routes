@@ -6,6 +6,8 @@
 /book/#BookId BookR GET
 /book/#BookId/settings BookSettingsR GET
 /book/#BookId/settings/frequent_transaction/#FrequentTransactionId BookSettingsFrequentR GET
+/book/#BookId/settings/frequent_transaction/#FrequentTransactionId/delete BookSettingsFrequentDeleteR GET POST
+/book/#BookId/settings/frequent_transaction/#FrequentTransactionId/edit BookSettingsFrequentEditR GET POST
 /book/#BookId/settings/frequent_transactions/new BookSettingsFrequentCreateR GET POST
 /books BooksR GET
 /books/new BookCreateR POST
