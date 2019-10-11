@@ -12,7 +12,6 @@ getTransactionR = Transaction.layout $ \(Entity bookId _) (Entity transactionId 
 
     let ts = zip3 (repeat Nothing) entries (repeat (E.Value (Nothing :: (Maybe Nano))))
 
-    -- TODO: Fix this CSS XXX
     [whamlet|
         <a class="btn btn-primary pull-right" href="@{TransactionEditR bookId transactionId}">
             Edit
@@ -24,17 +23,19 @@ getTransactionR = Transaction.layout $ \(Entity bookId _) (Entity transactionId 
             <div .form-group>
                 <label>
                     Description
-                <input .static>
-                    #{transactionDescription transaction}
+                <div>
+                    <p .form-control-static>
+                        #{transactionDescription transaction}
             <div .form-group>
                 <label>
                     Date
-                <input .static>
-                    #{shortDateTime (transactionDate transaction)}
+                <div>
+                    <p .form-control-static>
+                        #{shortDateTime (transactionDate transaction)}
             <div .form-group>
                 <label>
                     Transactions
-                <table .table .table-condensed>
+                <table .table .table-condensed style="margin-top: 7px;">
                     <tr>
                         <th>
                             Account
