@@ -48,11 +48,11 @@ generateHTML bookId transactionId trees formM = do
     |]
 
 getTransactionDeleteR :: BookId -> TransactionId -> Handler Html
-getTransactionDeleteR = Transaction.layout $ \(Entity bookId book) (Entity transactionId _) accountTree -> do
+getTransactionDeleteR = Transaction.layout $ \(Entity bookId book) (Entity transactionId _) _ accountTree -> do
     generateHTML bookId transactionId accountTree Nothing
 
 postTransactionDeleteR :: BookId -> TransactionId -> Handler Html
-postTransactionDeleteR  = Transaction.layout $ \(Entity bookId book) (Entity transactionId _) accountTree -> do
+postTransactionDeleteR  = Transaction.layout $ \(Entity bookId book) (Entity transactionId _) _ accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 

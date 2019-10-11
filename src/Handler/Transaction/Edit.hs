@@ -6,11 +6,13 @@ import qualified Transaction
 import Handler.Transaction.Create hiding (generateHTML)
 import Import
 
-generateHTML :: BookId -> Entity Transaction -> [AccountTree] -> Maybe (Widget, Enctype) -> Widget
-generateHTML bookId (Entity transactionId transaction) trees formM = do
+generateHTML :: BookId -> Entity Transaction -> [Entity TransactionAccount] -> [AccountTree] -> Maybe (Widget, Enctype) -> Widget
+generateHTML bookId (Entity transactionId transaction) entries trees formM = do
     setTitle $ toHtml ("Edit Transaction" :: Text)
 
-    (description, date, entries) <- handlerToWidget loadTransaction
+    let description = transactionDescription transaction
+    let date = transactionDate transaction
+    entries <- handlerToWidget convertEntries
     (formW, enctype) <- handlerToWidget $ maybe (generateFormPost $ renderForm (Just description) (Just date) (Just entries) trees) return formM
 
     [whamlet|
@@ -27,23 +29,15 @@ generateHTML bookId (Entity transactionId transaction) trees formM = do
 
     where
 
-        -- Load transaction and check that accounts are in the book.
-        loadTransaction = do
-            -- Load transaction.
-            entries <- runDB $ selectList [TransactionAccountTransaction ==. transactionId] [Asc TransactionAccountId]
-
-            -- -- Check permission on all accounts.
-            -- -- JP: We could just check one if we have the invariant that all accounts in the transaction belong to the same book.
-            -- Account.requireAllInBook trees $ map (transactionAccountAccount . entityVal) $ take 1 entries
-
+        -- Convert entries.
+        convertEntries = do
             -- Return transaction and entries. Implicitly checks if account is in book.
-            entries' <- mapM (\(Entity _ TransactionAccount{..}) -> do
+            mapM (\(Entity _ TransactionAccount{..}) -> do
                 -- Get account type.
                 isDebit <- Account.isDebit trees transactionAccountAccount
                     
                 return (transactionAccountAccount, fromAmount isDebit transactionAccountAmount)
               ) entries
-            return (transactionDescription transaction, transactionDate transaction, entries')
 
         fromAmount True v | v >= 0 = Left v
         fromAmount True v = Right $ negate v
@@ -52,11 +46,11 @@ generateHTML bookId (Entity transactionId transaction) trees formM = do
 
 
 getTransactionEditR :: BookId -> TransactionId -> Handler Html
-getTransactionEditR = Transaction.layout $ \(Entity bookId _) transactionE accountTree -> do
-    generateHTML bookId transactionE accountTree Nothing
+getTransactionEditR = Transaction.layout $ \(Entity bookId _) transactionE entries accountTree -> do
+    generateHTML bookId transactionE entries accountTree Nothing
 
 postTransactionEditR :: BookId -> TransactionId -> Handler Html
-postTransactionEditR  = Transaction.layout $ \(Entity bookId book) transactionE accountTree -> do
+postTransactionEditR  = Transaction.layout $ \(Entity bookId book) transactionE entries accountTree -> do
     let Entity transactionId transaction = transactionE
 
     -- Check that user can write to book.
@@ -66,10 +60,10 @@ postTransactionEditR  = Transaction.layout $ \(Entity bookId book) transactionE 
     case res of
         FormMissing -> do
             pkcloudSetMessageDanger "Editing transaction failed."
-            generateHTML bookId transactionE accountTree $ Just (formW, formE)
+            generateHTML bookId transactionE entries accountTree $ Just (formW, formE)
         FormFailure _msg -> do
             pkcloudSetMessageDanger "Editing transaction failed."
-            generateHTML bookId transactionE accountTree $ Just (formW, formE)
+            generateHTML bookId transactionE entries accountTree $ Just (formW, formE)
         FormSuccess (FormData description (UTCTime date' _) entries) -> do
             -- Extract date time.
             let (UTCTime _ time) = transactionDate transaction
