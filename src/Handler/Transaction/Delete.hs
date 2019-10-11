@@ -2,7 +2,7 @@ module Handler.Transaction.Delete where
 
 import qualified Account
 import qualified Book
-import qualified Folder
+import qualified Transaction
 import Import
 
 data FormData = FormData
@@ -14,11 +14,6 @@ renderForm = renderBootstrap3 layout $ pure FormData
 generateHTML :: BookId -> TransactionId -> [AccountTree] -> Maybe (Widget, Enctype) -> Widget
 generateHTML bookId transactionId trees formM = do
     setTitle $ toHtml ("Delete Transaction" :: Text)
-
-    -- Check that all accounts are in the book.
-    -- JP: We could just check one if we have the invariant that all accounts in the transaction belong to the same book.
-    ts <- handlerToWidget $ runDB $ selectList [TransactionAccountTransaction ==. transactionId] []
-    Account.requireAllInBook trees $ map (\(Entity _ ta) -> transactionAccountAccount ta) $ take 1 ts
 
     ((res, formW), formE) <- handlerToWidget $ runFormPost renderForm
     -- Get transaction.
@@ -53,18 +48,13 @@ generateHTML bookId transactionId trees formM = do
     |]
 
 getTransactionDeleteR :: BookId -> TransactionId -> Handler Html
-getTransactionDeleteR bookId transactionId = flip Book.layout bookId $ \(Entity bookId book) accountTree -> do
+getTransactionDeleteR = Transaction.layout $ \(Entity bookId book) (Entity transactionId _) accountTree -> do
     generateHTML bookId transactionId accountTree Nothing
 
 postTransactionDeleteR :: BookId -> TransactionId -> Handler Html
-postTransactionDeleteR  bookId transactionId = flip Book.layout bookId $ \(Entity bookId book) accountTree -> do
+postTransactionDeleteR  = Transaction.layout $ \(Entity bookId book) (Entity transactionId _) accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
-
-    -- Check that all accounts are in the book.
-    -- JP: We could just check one if we have the invariant that all accounts in the transaction belong to the same book.
-    ts <- handlerToWidget $ runDB $ selectList [TransactionAccountTransaction ==. transactionId] []
-    Account.requireAllInBook accountTree $ map (\(Entity _ ta) -> transactionAccountAccount ta) $ take 1 ts
 
     ((res, formW), formE) <- handlerToWidget $ runFormPost renderForm
     case res of

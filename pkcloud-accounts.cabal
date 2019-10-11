@@ -101,6 +101,7 @@ library
       Settings.StaticFiles
       Types
       Types.Classes
+      Transaction
   default-language: Haskell2010
   extensions: NoImplicitPrelude, ViewPatterns, OverloadedStrings, TemplateHaskell, QuasiQuotes, TypeFamilies, MultiParamTypeClasses, FlexibleContexts, ScopedTypeVariables, RecordWildCards
 

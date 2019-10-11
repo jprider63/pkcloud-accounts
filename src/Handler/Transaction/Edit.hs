@@ -2,12 +2,12 @@ module Handler.Transaction.Edit where
 
 import qualified Account
 import qualified Book
-import qualified Folder
+import qualified Transaction
 import Handler.Transaction.Create hiding (generateHTML)
 import Import
 
-generateHTML :: BookId -> TransactionId -> [AccountTree] -> Maybe (Widget, Enctype) -> Widget
-generateHTML bookId transactionId trees formM = do
+generateHTML :: BookId -> Entity Transaction -> [AccountTree] -> Maybe (Widget, Enctype) -> Widget
+generateHTML bookId (Entity transactionId transaction) trees formM = do
     setTitle $ toHtml ("Edit Transaction" :: Text)
 
     (description, date, entries) <- handlerToWidget loadTransaction
@@ -30,11 +30,7 @@ generateHTML bookId transactionId trees formM = do
         -- Load transaction and check that accounts are in the book.
         loadTransaction = do
             -- Load transaction.
-            (transaction, entries) <- runDB $ do
-                t <- get404 transactionId
-                e <- selectList [TransactionAccountTransaction ==. transactionId] [Asc TransactionAccountId]
-
-                return (t, e)
+            entries <- runDB $ selectList [TransactionAccountTransaction ==. transactionId] [Asc TransactionAccountId]
 
             -- -- Check permission on all accounts.
             -- -- JP: We could just check one if we have the invariant that all accounts in the transaction belong to the same book.
@@ -56,11 +52,13 @@ generateHTML bookId transactionId trees formM = do
 
 
 getTransactionEditR :: BookId -> TransactionId -> Handler Html
-getTransactionEditR bookId transactionId = flip Book.layout bookId $ \(Entity bookId book) accountTree -> do
-    generateHTML bookId transactionId accountTree Nothing
+getTransactionEditR = Transaction.layout $ \(Entity bookId _) transactionE accountTree -> do
+    generateHTML bookId transactionE accountTree Nothing
 
 postTransactionEditR :: BookId -> TransactionId -> Handler Html
-postTransactionEditR  bookId transactionId = flip Book.layout bookId $ \(Entity bookId book) accountTree -> do
+postTransactionEditR  = Transaction.layout $ \(Entity bookId book) transactionE accountTree -> do
+    let Entity transactionId transaction = transactionE
+
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 
@@ -68,16 +66,16 @@ postTransactionEditR  bookId transactionId = flip Book.layout bookId $ \(Entity 
     case res of
         FormMissing -> do
             pkcloudSetMessageDanger "Editing transaction failed."
-            generateHTML bookId transactionId accountTree $ Just (formW, formE)
+            generateHTML bookId transactionE accountTree $ Just (formW, formE)
         FormFailure _msg -> do
             pkcloudSetMessageDanger "Editing transaction failed."
-            generateHTML bookId transactionId accountTree $ Just (formW, formE)
+            generateHTML bookId transactionE accountTree $ Just (formW, formE)
         FormSuccess (FormData description (UTCTime date' _) entries) -> do
-            handlerToWidget $ runDB $ do
-                -- Extract date time.
-                (UTCTime _ time) <- transactionDate <$> get404 transactionId
-                let date = UTCTime date' time
+            -- Extract date time.
+            let (UTCTime _ time) = transactionDate transaction
+            let date = UTCTime date' time
 
+            handlerToWidget $ runDB $ do
                 -- Delete old transaction amounts.
                 deleteWhere [TransactionAccountTransaction ==. transactionId]
 
