@@ -62,25 +62,27 @@ getBookR = Book.layout $ \(Entity bookId book) accountTree -> do
 
             -- Mark if we should display the description.
             -- TODO: Is there a faster way? XXX
-            let ts = groupBy (\((Entity a _),_,_) ((Entity b _),_,_) -> a == b) ts'
+            let ts = groupBy (\((Just (Entity a _)),_,_) ((Just (Entity b _)),_,_) -> a == b) $ map justFirst3 ts'
 
-            [whamlet|
-                <table .table .table-condensed>
-                    <tr>
-                        <th>
-                            Description
-                        <th>
-                            Date
-                        <th>
-                            Account
-                        <th>
-                            Debit
-                        <th>
-                            Credit
-                        <th>
-                            Balance
-                    ^{concatMap (Account.displayTransactionRow accountTree bookId . reverse) ts}
-            |]
+            return ()
+
+            -- [whamlet|
+            --     <table .table .table-condensed>
+            --         <tr>
+            --             <th>
+            --                 Description
+            --             <th>
+            --                 Date
+            --             <th>
+            --                 Account
+            --             <th>
+            --                 Debit
+            --             <th>
+            --                 Credit
+            --             <th>
+            --                 Balance
+            --         ^{concatMap (Account.displayTransactionRow accountTree bookId . reverse) ts}
+            -- |]
 
         featuredW :: BookId -> [AccountTree] -> Widget
         featuredW bookId tree =

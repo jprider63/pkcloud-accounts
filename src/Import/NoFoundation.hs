@@ -27,5 +27,8 @@ dollar d = '$':show (toCenti d)
 shortDateTime :: UTCTime -> String
 shortDateTime = formatTime defaultTimeLocale "%D" -- "%D %H:%M %P"
 
+-- longDateTime :: UTCTime -> String
+-- longDateTime = formatTime defaultTimeLocale "%D %H:%M %P"
+
 getCurrentTime :: MonadIO m => m UTCTime
 getCurrentTime = liftIO Y.getCurrentTime

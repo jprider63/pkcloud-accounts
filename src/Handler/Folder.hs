@@ -17,7 +17,7 @@ getFolderR = Folder.layout $ \(Entity bookId book) accountTree (FolderNode (Enti
 
     -- Mark if we should display the description.
     -- TODO: Is there a faster way? XXX
-    let ts = groupBy (\((Entity a _),_,_) ((Entity b _),_,_) -> a == b) ts'
+    let ts = groupBy (\((Just (Entity a _)),_,_) ((Just (Entity b _)),_,_) -> a == b) $ map justFirst3 ts'
 
     -- Display folder information and recent transactions.
     let accountType = if isDebit then "Debit" else "Credit" :: Text

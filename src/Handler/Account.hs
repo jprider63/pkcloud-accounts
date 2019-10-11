@@ -14,9 +14,10 @@ getAccountR = Account.layout $ \(Entity bookId book) (Entity accountId account) 
     --     E.where_ (ta E.^. TransactionAccountAccount E.==. E.val accountId)
     --     return r
 
-    ts <- handlerToWidget $ runDB $ E.select $ E.fromSubSelect transactionQuery $ \(t, ta, s) -> do
+    ts' <- handlerToWidget $ runDB $ E.select $ E.fromSubSelect transactionQuery $ \(t, ta, s) -> do
         E.where_ (ta E.^. TransactionAccountAccount E.==. E.val accountId)
         return (t, ta, E.fromAlias s)
+    let ts = map justFirst3 ts'
 
     -- E.subselect_query transactionQuery $ \r@(_, ta, _) -> do
     --     E.where_ (ta E.^. TransactionAccountAccount E.==. E.val accountId)

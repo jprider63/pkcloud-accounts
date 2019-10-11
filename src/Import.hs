@@ -457,3 +457,5 @@ entriesField accounts = -- checkMMap toEntity (map toKey) $
 
 
 
+justFirst3 :: (a, b, c) -> (Maybe a, b, c)
+justFirst3 (a,b,c) = (Just a, b, c)

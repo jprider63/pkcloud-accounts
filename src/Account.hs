@@ -86,26 +86,21 @@ layout f bookId accountId = do
             -- CPS for widget.
             f bookE (Entity accountId account) accountIsDebit accountTree
 
-displayTransactionRow :: (GeneralizedTransaction t, GeneralizedTransactionAccount ta) => [AccountTree] -> BookId -> [(Entity t, Entity ta, E.Value (Maybe Nano))] -> Widget
+displayTransactionRow :: (GeneralizedTransactionAccount ta) => [AccountTree] -> BookId -> [((Maybe (Entity Transaction)), Entity ta, E.Value (Maybe Nano))] -> Widget
 displayTransactionRow a b x = displayTransactionRow' a b True x
 
-displayTransactionRow' :: (GeneralizedTransaction t, GeneralizedTransactionAccount ta) => [AccountTree] -> BookId -> Bool -> [(Entity t, Entity ta, E.Value (Maybe Nano))] -> Widget
+displayTransactionRow' :: (GeneralizedTransactionAccount ta) => [AccountTree] -> BookId -> Bool -> [(Maybe (Entity Transaction), Entity ta, E.Value (Maybe Nano))] -> Widget
 displayTransactionRow' _ _ _ [] = mempty -- "No transactions"??
 displayTransactionRow' accountTree bookId showAccountName (first:rest) = 
     let f = displayRow accountTree bookId in
     mconcat $ (f True first): map (f False) rest
 
     where
-        displayRow accountTree bookId displayDescription ((Entity tId t), (Entity taId ta), (E.Value balanceM)) = do
+        displayRow accountTree bookId isFirst (transactionM, (Entity taId ta), (E.Value balanceM)) = do
             ((Entity aId a), _, accountIsDebit) <- Account.leaf accountTree $ gTransactionAccountAccount ta
-            let balanceH = maybe mempty (\d -> [shamlet|
-                    <td>
-                        #{dollar d}
-                  |]) balanceM
             [whamlet|
                 <tr .#{style}>
-                    <td>
-                        ^{desc}
+                    ^{desc}
                     ^{date}
                     ^{account aId a}
                     <td>
@@ -124,19 +119,25 @@ displayTransactionRow' accountTree bookId showAccountName (first:rest) =
                         |]
                     else
                         mempty
-                style = if displayDescription then "transaction-first" else "transaction-rest" :: Text
-                desc = if displayDescription then [whamlet|
-                          <a href="@{gTransactionRoute bookId tId}">
-                              #{gTransactionDescription t}
-                        |]
-                       else
-                         mempty
+                style = if isFirst then "transaction-first" else "transaction-rest" :: Text
+                desc = case transactionM of
+                    Nothing ->
+                        mempty
+                    Just (Entity tId t) ->
+                        if isFirst then [whamlet|
+                            <td>
+                                <a href="@{TransactionR bookId tId}">
+                                    #{transactionDescription t}
+                          |]
+                        else [whamlet|
+                            <td>
+                          |]
 
-                date = case gTransactionDate t of
+                date = case (transactionDate . entityVal) <$> transactionM of
                     Nothing -> 
                         mempty
                     Just d -> 
-                        if displayDescription then [whamlet|
+                        if isFirst then [whamlet|
                             <td>
                               #{shortDateTime d}
                           |] 
@@ -145,3 +146,7 @@ displayTransactionRow' accountTree bookId showAccountName (first:rest) =
                             <td>
                           |]
                         
+                balanceH = maybe mempty (\d -> [shamlet|
+                    <td>
+                        #{dollar d}
+                  |]) balanceM

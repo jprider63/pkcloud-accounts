@@ -71,6 +71,7 @@ library
       Account
       Application
       Book
+      FrequentTransaction
       Folder
       Foundation
       Handler.Account

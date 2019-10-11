@@ -64,7 +64,8 @@ postTransactionDeleteR  = Transaction.layout $ \(Entity bookId book) transaction
         FormSuccess FormData -> do
             -- Delete transaction.
             handlerToWidget $ runDB $ do
-                deleteWhere [TransactionAccountTransaction ==. entityKey transactionE]
+                let transactionId = entityKey transactionE
+                deleteWhere [TransactionAccountTransaction ==. transactionId]
                 delete transactionId
 
             -- Set message.
