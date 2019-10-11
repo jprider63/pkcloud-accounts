@@ -11,14 +11,11 @@ renderForm = renderBootstrap3 layout $ pure FormData
     where
         layout = BootstrapHorizontalForm (ColXs 0) (ColXs 3) (ColXs 0) (ColXs 9)
 
-generateHTML :: BookId -> TransactionId -> [AccountTree] -> Maybe (Widget, Enctype) -> Widget
-generateHTML bookId transactionId trees formM = do
+generateHTML :: BookId -> Entity Transaction -> [AccountTree] -> Maybe (Widget, Enctype) -> Widget
+generateHTML bookId (Entity transactionId transaction) trees formM = do
     setTitle $ toHtml ("Delete Transaction" :: Text)
 
-    ((res, formW), formE) <- handlerToWidget $ runFormPost renderForm
-    -- Get transaction.
-    transaction <- handlerToWidget $ runDB $ get404 transactionId
-
+    -- Generate form.
     (formW, enctype) <- handlerToWidget $ maybe (generateFormPost renderForm) return formM
 
     [whamlet|
@@ -48,11 +45,11 @@ generateHTML bookId transactionId trees formM = do
     |]
 
 getTransactionDeleteR :: BookId -> TransactionId -> Handler Html
-getTransactionDeleteR = Transaction.layout $ \(Entity bookId book) (Entity transactionId _) _ accountTree -> do
-    generateHTML bookId transactionId accountTree Nothing
+getTransactionDeleteR = Transaction.layout $ \(Entity bookId _) transactionE _ accountTree -> do
+    generateHTML bookId transactionE accountTree Nothing
 
 postTransactionDeleteR :: BookId -> TransactionId -> Handler Html
-postTransactionDeleteR  = Transaction.layout $ \(Entity bookId book) (Entity transactionId _) _ accountTree -> do
+postTransactionDeleteR  = Transaction.layout $ \(Entity bookId book) transactionE _ accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 
@@ -60,14 +57,14 @@ postTransactionDeleteR  = Transaction.layout $ \(Entity bookId book) (Entity tra
     case res of
         FormMissing -> do
             pkcloudSetMessageDanger "Deleting transaction failed."
-            generateHTML bookId transactionId accountTree $ Just (formW, formE)
+            generateHTML bookId transactionE accountTree $ Just (formW, formE)
         FormFailure _msg -> do
             pkcloudSetMessageDanger "Deleting transaction failed."
-            generateHTML bookId transactionId accountTree $ Just (formW, formE)
+            generateHTML bookId transactionE accountTree $ Just (formW, formE)
         FormSuccess FormData -> do
             -- Delete transaction.
             handlerToWidget $ runDB $ do
-                deleteWhere [TransactionAccountTransaction ==. transactionId]
+                deleteWhere [TransactionAccountTransaction ==. entityKey transactionE]
                 delete transactionId
 
             -- Set message.
