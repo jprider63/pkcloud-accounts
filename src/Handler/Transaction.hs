@@ -35,7 +35,7 @@ getTransactionR = Transaction.layout $ \(Entity bookId _) (Entity transactionId 
             <div .form-group>
                 <label>
                     Transactions
-                <table .table .table-condensed style="margin-top: 7px;">
+                <table .table .table-condensed .table-transactions>
                     <tr>
                         <th>
                             Account

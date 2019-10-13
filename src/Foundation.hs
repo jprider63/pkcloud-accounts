@@ -172,6 +172,10 @@ styling = [lucius|
         .list-group.list-group-collapse > .list-group > .list-group > .list-group > .list-group > .list-group > .list-group > .list-group-item {
             padding-left: 105px;
         }
+
+        .table-transactions {
+            margin-top: 7px;
+        }
     |]
 
 -- Define breadcrumbs.
