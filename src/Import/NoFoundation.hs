@@ -32,3 +32,4 @@ shortDateTime = formatTime defaultTimeLocale "%D" -- "%D %H:%M %P"
 
 getCurrentTime :: MonadIO m => m UTCTime
 getCurrentTime = liftIO Y.getCurrentTime
+

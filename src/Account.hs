@@ -150,3 +150,20 @@ displayTransactionRow' accountTree bookId showAccountName (first:rest) =
                     <td>
                         #{dollar d}
                   |]) balanceM
+
+-- Converts list of (abstract) transactions to entries for entries field.
+transactionsToEntries :: GeneralizedTransactionAccount ta => [AccountTree] -> [Entity ta] -> Handler [(Key Account, Either Nano Nano)]
+transactionsToEntries trees = mapM $ \(Entity _ ta) -> do
+    -- Get account type.
+    let taa = gTransactionAccountAccount ta
+    isDebit <- Account.isDebit trees taa
+
+    return (taa, fromAmount isDebit $ gTransactionAccountAmount ta)
+
+    where
+
+        fromAmount True v | v >= 0 = Left v
+        fromAmount True v = Right $ negate v
+        fromAmount False v | v >= 0 = Right v
+        fromAmount False v = Left $ negate v
+

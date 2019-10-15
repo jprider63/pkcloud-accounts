@@ -12,7 +12,7 @@ generateHTML bookId (Entity transactionId transaction) entries trees formM = do
 
     let description = transactionDescription transaction
     let date = transactionDate transaction
-    entries <- handlerToWidget convertEntries
+    entries <- handlerToWidget $ Account.transactionsToEntries trees entries
     (formW, enctype) <- handlerToWidget $ maybe (generateFormPost $ renderForm (Just description) (Just date) (Just entries) trees) return formM
 
     [whamlet|
@@ -26,23 +26,6 @@ generateHTML bookId (Entity transactionId transaction) entries trees formM = do
                 <button type="submit" class="btn btn-primary">
                     Edit Transaction
     |]
-
-    where
-
-        -- Convert entries.
-        convertEntries = do
-            -- Return transaction and entries. Implicitly checks if account is in book.
-            mapM (\(Entity _ TransactionAccount{..}) -> do
-                -- Get account type.
-                isDebit <- Account.isDebit trees transactionAccountAccount
-                    
-                return (transactionAccountAccount, fromAmount isDebit transactionAccountAmount)
-              ) entries
-
-        fromAmount True v | v >= 0 = Left v
-        fromAmount True v = Right $ negate v
-        fromAmount False v | v >= 0 = Right v
-        fromAmount False v = Left $ negate v
 
 
 getTransactionEditR :: BookId -> TransactionId -> Handler Html
