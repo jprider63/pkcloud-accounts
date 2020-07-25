@@ -32,8 +32,6 @@ getBookSettingsFrequentR = FrequentTransaction.layout $ \(Entity bookId book) (E
                 <table .table .table-condensed .table-transactions>
                     <tr>
                         <th>
-                            Description
-                        <th>
                             Account
                         <th>
                             Debit
