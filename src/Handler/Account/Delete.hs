@@ -24,7 +24,7 @@ generateHTML bookId (Entity accountId account) isDebit formM = do
     if not canDelete then
         [whamlet|
             <p>
-                You can't delete account <b>#{accountName account}</b> since it has transactions. Delete or change the transaction's account first.
+                You can't delete account <b>#{accountName account}</b> since it has transactions (or frequent transactions). Delete or change the transactions first.
             <a href="@{AccountR bookId accountId}" .btn .btn-default>
                 Cancel
         |]
@@ -56,8 +56,10 @@ generateHTML bookId (Entity accountId account) isDebit formM = do
         |]
 
 canDeleteAccount accountId = do
-    c <- handlerToWidget $ runDB $ count [TransactionAccountAccount ==. accountId]
-    return $ c == 0
+    handlerToWidget $ runDB $ do
+      c <- count [TransactionAccountAccount ==. accountId]
+      c' <- count [FrequentTransactionAccountAccount ==. accountId]
+      return $ c + c' == 0
 
 getAccountDeleteR :: Key Book -> Key Account -> Handler Html
 getAccountDeleteR = Account.layout $ \(Entity bookId book) accountE accountIsDebit accountTree -> do
