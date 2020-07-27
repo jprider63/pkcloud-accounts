@@ -2,6 +2,8 @@ module Import
     ( module Import
     ) where
 
+import qualified Data.Aeson as Aeson
+import qualified Data.Map as Map
 import qualified Data.Text.Lazy.Builder as TB
 import qualified Data.Text.Read as TR
 import qualified Database.Esqueleto as E
@@ -322,12 +324,17 @@ transactionQuery = E.from $ \(t `E.InnerJoin` ta) -> do
     s <- E.as $ E.over (E.sum_ (ta E.^. TransactionAccountAmount)) (Just $ ta E.^. TransactionAccountAccount) [E.asc (t E.^. TransactionDate), E.asc (t E.^. TransactionId)]
     return (t, ta, s)
 
-entriesField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text, a ~ Account) => [(Text, Key a)] -> Field m [(Key a, Either Nano Nano)]
+entriesField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text, a ~ Account) => [(Text, Key a)] -> [(Key a, Key a)] -> Field m [(Key a, Either Nano Nano)]
 -- entriesField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text) => [(Text, Key a)] -> Field m [(Entity a, Either Nano Nano)]
-entriesField accounts = -- checkMMap toEntity (map toKey) $ 
+entriesField accounts shadows' = -- checkMMap toEntity (map toKey) $ 
     Field parse view UrlEncoded
     
     where
+        shadows = Map.fromList $ map (\(k, v) -> (fromSqlKey k, fromSqlKey v)) shadows'
+
+        -- TODO: Break cycle so we can create accounts ourself.
+        -- accounts = Folder.treesToAccounts trees
+
         -- toKey (Entity k _, b) = (k, b)
         -- toEntity rs' = do
         --     rs <- runDB $ mapM (\(k, b) -> do
@@ -370,15 +377,17 @@ entriesField accounts = -- checkMMap toEntity (map toKey) $
             let val = either (const []) id val'
             let k = length val + 1
             toWidget [julius|
-                var _addEntry = function( i) {
+                var _addEntry = function() {
                     var k = #{intToJs k};
                 
-                    return function() {
+                    return function( i) {
                         // Make a fresh k.
                         k += 1;
 
-                        var parent = $('##{textToJs theId}');
-                        parent.append( '<div id="#{textToJs theId}-'+k+'" class="form-inline">#{htmlToJs $ accountsH Nothing}<input name="#{textToJs name}" #{attrsToJs attrs} type="number" placeholder="Debit" value=""></input><input name="#{textToJs name}" #{attrsToJs attrs} type="number" placeholder="Credit" value=""></input><div class="btn-group" role="group"><button type="button" class="btn btn-default" aria-label="Remove" onclick="_removeEntry(\'#{textToJs theId}\',\''+k+'\')"><span class="glyphicon glyphicon-minus" /></button><button type="button" class="btn btn-default" aria-label="Remove" onclick="_addEntry('+k+')"><span class="glyphicon glyphicon-plus" /></button></div></div>');
+                        var prevId = $('##{textToJs theId}-' + i);
+                        prevId.after( '<div id="#{textToJs theId}-'+k+'" data-row-number="'+k+'" class="form-inline">#{htmlToJs $ accountsH Nothing}<input name="#{textToJs name}" #{attrsToJs attrs} type="number" placeholder="Debit" value=""></input><input name="#{textToJs name}" #{attrsToJs attrs} type="number" placeholder="Credit" value=""></input><div class="btn-group" role="group"><button type="button" class="btn btn-default" aria-label="Remove" onclick="_removeEntry(\'#{textToJs theId}\',\''+k+'\')"><span class="glyphicon glyphicon-minus" /></button><button type="button" class="btn btn-default" aria-label="Add" onclick="_addEntry('+k+')"><span class="glyphicon glyphicon-plus" /></button></div></div>');
+
+                        return $('##{textToJs theId}-' + k);
                     }
                 }();
 
@@ -402,6 +411,42 @@ entriesField accounts = -- checkMMap toEntity (map toKey) $
                     //     });
                     // }
                 };
+
+                var _selectionChanged = function() {
+                    var parent = $('#'+'#{textToJs theId}');
+                    var shadowMap = #{Aeson.toJSON shadows};
+                    console.log( parent);
+                    console.log( shadowMap);
+
+                    return function( sel) {
+                        var parentDiv = sel.parentNode;
+                        var i = parentDiv.getAttribute("data-row-number");
+
+                        console.log("_selectionChanged");
+                        console.log(sel);
+                        console.log(sel.value);
+                        console.log(parentDiv);
+                        console.log(i);
+
+                        // TODO:
+                        // Remove previous shadow. 
+
+                        // Insert new shadow.
+                        var shadowAccountId = shadowMap[sel.value];
+                        if ( shadowAccountId !== undefined) {
+                            // Add row.
+                            sel.shadow = _addEntry( i);
+                            console.log( sel.shadow);
+
+                            // Set values.
+                            sel.shadow.children().first().val( shadowAccountId);
+                            // TODO:
+                            // .. set credit + debit values.
+
+                            // Set onchange callbacks for debit/credit inputs.
+                        }
+                    }
+                }();
             |]
 
             let rs = if null val then
@@ -420,14 +465,14 @@ entriesField accounts = -- checkMMap toEntity (map toKey) $
                 let d = maybe mempty show dM in
                 let c = maybe mempty show cM in
                 [whamlet|$newline never
-                        <div id="#{theId}-#{i}" .form-inline>
+                        <div id="#{theId}-#{i}" data-row-number="#{i}" .form-inline>
                             #{accountsH a}
                             <input name="#{name}" *{attrs} type="number" placeholder="Debit" value="#{d}" step="0.01">
                             <input name="#{name}" *{attrs} type="number" placeholder="Credit" value="#{c}" step="0.01">
                             <div .btn-group role="group">
                                 <button type="button" class="btn btn-default" aria-label="Remove" onclick="_removeEntry( '#{theId}', '#{i}')">
                                     <span .glyphicon .glyphicon-minus>
-                                <button type="button" class="btn btn-default" aria-label="Remove" onclick="_addEntry('#{i}')">
+                                <button type="button" class="btn btn-default" aria-label="Add" onclick="_addEntry('#{i}')">
                                     <span .glyphicon .glyphicon-plus>
                 |]
                 -- :isReq:required="" 
@@ -439,7 +484,7 @@ entriesField accounts = -- checkMMap toEntity (map toKey) $
             accountsH accountIdM = 
                 let accountV = maybe mempty (toMarkup . fromSqlKey) accountIdM in
                 [shamlet|$newline never
-                    <select name="#{name}" *{attrs} :isReq:required="" value="#{accountV}">
+                    <select name="#{name}" *{attrs} :isReq:required="" value="#{accountV}" onchange="_selectionChanged( this)">
                         ^{mapM_ (accountH accountIdM) accounts}
                 |]
 
@@ -451,7 +496,7 @@ entriesField accounts = -- checkMMap toEntity (map toKey) $
 
             intToJs = RawJavascript . TB.fromString . show
             textToJs = RawJavascript . TB.fromText
-            htmlToJs = RawJavascript . TB.fromString . renderHtml
+            htmlToJs = RawJavascript . TB.fromString . renderHtml -- TODO: This doesn't escape '
             attrsToJs = htmlToJs . TH.attrsToHtml
 
 

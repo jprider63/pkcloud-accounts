@@ -27,6 +27,13 @@ treesToAccounts trees = concatMap (toAccounts "") trees
 
         spacingChar = ":"
 
+treesToShadows :: [AccountTree] -> [(AccountId, AccountId)]
+treesToShadows trees = concatMap toShadows trees
+  where
+    toShadows (FolderNode _ _ _ children) = concatMap toShadows children
+    toShadows (AccountLeaf (Entity accountId account) _ _) | Just shadowAccountId <- accountShadow account = [(accountId, shadowAccountId)]
+    toShadows (AccountLeaf _ _ _) = []
+
 layout :: (Entity Book -> [AccountTree] -> AccountTree -> Widget) -> BookId -> FolderAccountId -> Handler Html
 layout f bookId fId = flip Book.layout bookId $ \bookE accountTree -> do
     -- Load folder (and check that folder is in book).

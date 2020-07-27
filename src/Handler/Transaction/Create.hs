@@ -16,7 +16,7 @@ renderForm descM dateM entriesM trees =
     renderBootstrap3 BootstrapBasicForm $ FormData
         <$> areq textField descriptionSettings descM
         <*> areq dateField dateSettings dateM
-        <*> areq (entriesField accounts) entriesSettings entriesM
+        <*> areq (entriesField accounts shadows) entriesSettings entriesM
     
     where
         descriptionSettings = withPlaceholder "Description" $ bfs ("Description" :: Text)
@@ -24,6 +24,7 @@ renderForm descM dateM entriesM trees =
         entriesSettings = bfs ("Entries" :: Text)
 
         accounts = Folder.treesToAccounts trees
+        shadows = Folder.treesToShadows trees
 
 generateHTML :: BookId -> [AccountTree] -> Maybe (Widget, Enctype) -> Widget
 generateHTML bookId trees formM = do

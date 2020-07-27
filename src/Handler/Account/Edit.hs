@@ -55,12 +55,16 @@ postAccountEditR = Account.layout $ \(Entity bookId book) accountE@(Entity accou
         FormFailure _msg -> do
             pkcloudSetMessageDanger "Editing account failed."
             generateHTML bookId accountE isDebit accountTree $ Just (formW, formE)
-        FormSuccess (FormData name parentId featured) -> do
+        FormSuccess (FormData name parentId shadowAccountId featured) -> do
+            -- Check that shadow account is in this book.
+            maybe (return ()) (Account.requireInBook accountTree) shadowAccountId
+
             -- Update account.
             handlerToWidget $ runDB $ update accountId [
                   AccountName =. name
                 , AccountParent =. parentId
                 , AccountFeatured =. featured
+                , AccountShadow =. shadowAccountId
                 ]
 
             -- Set message.
