@@ -415,35 +415,118 @@ entriesField accounts shadows' = -- checkMMap toEntity (map toKey) $
                 var _selectionChanged = function() {
                     var parent = $('#'+'#{textToJs theId}');
                     var shadowMap = #{Aeson.toJSON shadows};
-                    console.log( parent);
-                    console.log( shadowMap);
+
+                    var getAccount = function( rowDiv) {
+                        var i = rowDiv.children().eq(0);
+                        return i.val();
+                    };
+
+                    var getDebitNode = function( rowDiv) {
+                        return rowDiv.children().eq(1);
+                    }
+
+                    var getDebit = function( rowDiv) {
+                        var i = getDebitNode( rowDiv);
+                        return i.val();
+                    };
+
+                    var getCreditNode = function( rowDiv) {
+                        return rowDiv.children().eq(2);
+                    }
+
+                    var getCredit = function( rowDiv) {
+                        var i = getCreditNode( rowDiv);
+                        return i.val();
+                    };
+
+                    var isShadowUnchanged = function( sel, shadowAccountId) {
+                        var shadow = sel.shadow;
+                        var shadowAccountId = sel.shadowAccountId;
+
+                        // Check if shadow still exists.
+                        if ( shadow === undefined || shadow === null || ! $.contains(document.body, shadow[0])) {
+                            sel.shadow = null;
+
+                            return false;
+                        }
+
+                        // Check that account, debit, and credit values are the same.
+                        return shadowAccountId.toString() === getAccount( shadow) && sel.debit === getCredit( shadow) && sel.credit === getDebit( shadow);
+                    }
 
                     return function( sel) {
-                        var parentDiv = sel.parentNode;
-                        var i = parentDiv.getAttribute("data-row-number");
+                        var rowDiv = $("#"+sel.parentNode.id);
+                        var i = rowDiv.attr("data-row-number");
 
-                        console.log("_selectionChanged");
-                        console.log(sel);
-                        console.log(sel.value);
-                        console.log(parentDiv);
-                        console.log(i);
+                        // Remove previous shadow (if unchanged).
+                        if ( sel.shadow) {
+                            // Remove callbacks.
+                            getDebitNode( rowDiv).unbind('input');
+                            getCreditNode( rowDiv).unbind('input');
 
-                        // TODO:
-                        // Remove previous shadow. 
+                            // Check if unchanged.
+                            if ( isShadowUnchanged( sel)) {
+                                sel.shadow.remove();
+
+                                sel.shadow = null;
+                            }
+                        }
 
                         // Insert new shadow.
                         var shadowAccountId = shadowMap[sel.value];
                         if ( shadowAccountId !== undefined) {
                             // Add row.
                             sel.shadow = _addEntry( i);
-                            console.log( sel.shadow);
+                            sel.shadowAccountId = shadowAccountId;
 
                             // Set values.
-                            sel.shadow.children().first().val( shadowAccountId);
-                            // TODO:
-                            // .. set credit + debit values.
+                            var shadowAccountField = sel.shadow.children().first();
+                            shadowAccountField.val( shadowAccountId);
+
+                            // Set debit.
+                            var credit = getCredit( rowDiv);
+                            shadowDebitField = shadowAccountField.next();
+                            shadowDebitField.val( credit);
+
+                            // Set credit.
+                            var debit = getDebit( rowDiv);
+                            shadowCreditField = shadowDebitField.next();
+                            shadowCreditField.val( debit);
+
+                            // Cache current values.
+                            sel.credit = credit;
+                            sel.debit = debit;
 
                             // Set onchange callbacks for debit/credit inputs.
+                            var debitNode = getDebitNode( rowDiv);
+                            debitNode.bind('input', function() {
+                                // Get current debit value.
+                                var currentVal = debitNode.val();
+
+                                // Check if shadow is unchanged.
+                                if ( isShadowUnchanged( sel)) {
+                                    // Set shadow credit field.
+                                    shadowCreditField.val( currentVal);
+                                }
+
+                                // Update cached value.
+                                sel.debit = currentVal;
+                            });
+
+                            var creditNode = getCreditNode( rowDiv);
+                            creditNode.bind('input', function() {
+                                // Get current credit value.
+                                var currentVal = creditNode.val();
+
+                                // Check if shadow is unchanged.
+                                if ( isShadowUnchanged( sel)) {
+                                    // Set shadow debit field.
+                                    shadowDebitField.val( currentVal);
+                                }
+
+                                // Update cached value.
+                                sel.credit = currentVal;
+                            });
                         }
                     }
                 }();
