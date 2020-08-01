@@ -13,7 +13,7 @@ generateHTML bookId (Entity transactionId transaction) entries trees formM = do
     let description = transactionDescription transaction
     let date = transactionDate transaction
     entries <- handlerToWidget $ Account.transactionsToEntries trees entries
-    (formW, enctype) <- handlerToWidget $ maybe (generateFormPost $ renderForm (Just description) (Just date) (Just entries) trees) return formM
+    (formW, enctype) <- handlerToWidget $ maybe (renderForm bookId (Just description) (Just date) (Just entries) trees >>= generateFormPost) return formM
 
     [whamlet|
         <h2>
@@ -39,7 +39,7 @@ postTransactionEditR  = Transaction.layout $ \(Entity bookId book) transactionE 
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 
-    ((res, formW), formE) <- handlerToWidget $ runFormPost $ renderForm Nothing Nothing Nothing accountTree
+    ((res, formW), formE) <- handlerToWidget $ renderForm bookId Nothing Nothing Nothing accountTree >>= runFormPost
     case res of
         FormMissing -> do
             pkcloudSetMessageDanger "Editing transaction failed."
@@ -47,7 +47,7 @@ postTransactionEditR  = Transaction.layout $ \(Entity bookId book) transactionE 
         FormFailure _msg -> do
             pkcloudSetMessageDanger "Editing transaction failed."
             generateHTML bookId transactionE entries accountTree $ Just (formW, formE)
-        FormSuccess (FormData description (UTCTime date' _) entries) -> do
+        FormSuccess (FormData _ description (UTCTime date' _) entries) -> do
             -- Extract date time.
             let (UTCTime _ time) = transactionDate transaction
             let date = UTCTime date' time

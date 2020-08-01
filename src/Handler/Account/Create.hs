@@ -14,8 +14,8 @@ data FormData = FormData {
 
 renderForm trees parentF accountM = renderBootstrap3 BootstrapBasicForm $ FormData
     <$> areq textField accountSettings (accountName <$> accountM)
-    <*> areq (parentF $ selectFieldList folders) parentSettings (accountParent <$> accountM)
-    <*> aopt (selectFieldList accounts) shadowSettings (accountShadow <$> accountM)
+    <*> areq (parentF $ selectFieldKeys folders) parentSettings (accountParent <$> accountM)
+    <*> aopt (selectFieldKeys accounts) shadowSettings (accountShadow <$> accountM)
     <*> areq checkBoxField featuredSettings (accountFeatured <$> accountM) -- TODO: Switch to bootstrapCheckBoxField XXX
 
     where

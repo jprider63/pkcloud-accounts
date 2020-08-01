@@ -7,21 +7,32 @@ import Import
 import Text.Blaze (toMarkup)
 
 data FormData = FormData {
-      formDataDescription :: Text
+      formDataEmptyField :: Maybe (Key FrequentTransaction)
+    , formDataDescription :: Text
     , formDataDate :: UTCTime
     , formDataEntries :: [(Key Account, Either Nano Nano)]
     }
 
-renderForm descM dateM entriesM trees =
-    renderBootstrap3 BootstrapBasicForm $ FormData
-        <$> areq textField descriptionSettings descM
+renderForm bookId descM dateM entriesM trees = do
+    ftField <- frequentTransationField bookId descriptionId entriesId
+    return $ renderBootstrap3 BootstrapBasicForm $ FormData
+        <$> aopt ftField frequentTransactionSettings Nothing
+        <*> areq textField descriptionSettings descM
         <*> areq dateField dateSettings dateM
         <*> areq (entriesField accounts shadows) entriesSettings entriesM
     
     where
-        descriptionSettings = withPlaceholder "Description" $ bfs ("Description" :: Text)
+        descriptionId = "form-description-field"
+        descriptionSettings = withFieldId descriptionId $ withPlaceholder "Description" $ bfs ("Description" :: Text)
+
         dateSettings = bfs ("Date" :: Text)
-        entriesSettings = bfs ("Entries" :: Text)
+
+        entriesId = "form-entries-field"
+        entriesSettings = withFieldId entriesId $ bfs ("Entries" :: Text)
+
+        frequentTransactionSettings = 
+          let s = bfs ("Load frequent transaction" :: Text) in
+          s { fsAttrs = ("autocomplete","off"):fsAttrs s }
 
         accounts = Folder.treesToAccounts trees
         shadows = Folder.treesToShadows trees
@@ -30,7 +41,7 @@ generateHTML :: BookId -> [AccountTree] -> Maybe (Widget, Enctype) -> Widget
 generateHTML bookId trees formM = do
     setTitle $ toHtml ("New Transaction" :: Text)
     
-    (formW, enctype) <- handlerToWidget $ maybe (getCurrentTime >>= \now -> generateFormPost $ renderForm Nothing (Just now) Nothing trees) return formM
+    (formW, enctype) <- handlerToWidget $ maybe (getCurrentTime >>= \now -> renderForm bookId Nothing (Just now) Nothing trees >>= generateFormPost) return formM
 
     -- TODO: Button to load saved transactions. XXX
 
@@ -53,7 +64,7 @@ postTransactionCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 
-    ((res, formW), formE) <- handlerToWidget $ runFormPost $ renderForm Nothing Nothing Nothing accountTree
+    ((res, formW), formE) <- handlerToWidget $ renderForm bookId Nothing Nothing Nothing accountTree >>= runFormPost
     case res of
         FormMissing -> do
             pkcloudSetMessageDanger "Creating transaction failed."
@@ -61,7 +72,7 @@ postTransactionCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
         FormFailure _msg -> do
             pkcloudSetMessageDanger "Creating transaction failed."
             generateHTML bookId accountTree $ Just (formW, formE)
-        FormSuccess (FormData description date' entries) -> do
+        FormSuccess (FormData _ description date' entries) -> do
             -- Get user.
             uId <- handlerToWidget requireAuthId
 

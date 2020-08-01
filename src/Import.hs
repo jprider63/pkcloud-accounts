@@ -294,6 +294,9 @@ eitherField t (s1, f1) (s2, f2) = Field parse view UrlEncoded
 --         rightSelected (Right (Left _)) = False
 --         rightSelected (Right (Right _)) = True
 
+withFieldId :: Text -> FieldSettings a -> FieldSettings a
+withFieldId fId fs = fs {fsId = Just fId}
+
 -- TODO: Move to pkcloud-core, error messages, "None" for maybe results XXX
 bootstrapRadioFieldList :: (Eq a, RenderMessage site FormMessage, RenderMessage site msg) => [(msg, a)] -> Field (HandlerT site IO) a
 bootstrapRadioFieldList l = (radioFieldList l) -- radioField $ optionsPairs l
@@ -384,8 +387,14 @@ entriesField accounts shadows' = -- checkMMap toEntity (map toKey) $
                         // Make a fresh k.
                         k += 1;
 
-                        var prevId = $('##{textToJs theId}-' + i);
-                        prevId.after( '<div id="#{textToJs theId}-'+k+'" data-row-number="'+k+'" class="form-inline">#{htmlToJs $ accountsH Nothing}<input name="#{textToJs name}" #{attrsToJs attrs} type="number" placeholder="Debit" value=""></input><input name="#{textToJs name}" #{attrsToJs attrs} type="number" placeholder="Credit" value=""></input><div class="btn-group" role="group"><button type="button" class="btn btn-default" aria-label="Remove" onclick="_removeEntry(\'#{textToJs theId}\',\''+k+'\')"><span class="glyphicon glyphicon-minus" /></button><button type="button" class="btn btn-default" aria-label="Add" onclick="_addEntry('+k+')"><span class="glyphicon glyphicon-plus" /></button></div></div>');
+                        var html = '<div id="#{textToJs theId}-'+k+'" data-row-number="'+k+'" class="form-inline">#{htmlToJs $ accountsH Nothing}<input name="#{textToJs name}" #{attrsToJs attrs} type="number" placeholder="Debit" value=""></input><input name="#{textToJs name}" #{attrsToJs attrs} type="number" placeholder="Credit" value=""></input><div class="btn-group" role="group"><button type="button" class="btn btn-default" aria-label="Remove" onclick="_removeEntry(\'#{textToJs theId}\',\''+k+'\')"><span class="glyphicon glyphicon-minus" /></button><button type="button" class="btn btn-default" aria-label="Add" onclick="_addEntry('+k+')"><span class="glyphicon glyphicon-plus" /></button></div></div>';
+
+                        if ( i === undefined) {
+                            $('##{textToJs theId}').prepend( html);
+                        }
+                        else {
+                            $('##{textToJs theId}-' + i).after( html);
+                        }
 
                         return $('##{textToJs theId}-' + k);
                     }
@@ -582,6 +591,107 @@ entriesField accounts shadows' = -- checkMMap toEntity (map toKey) $
             htmlToJs = RawJavascript . TB.fromString . renderHtml -- TODO: This doesn't escape '
             attrsToJs = htmlToJs . TH.attrsToHtml
 
+
+selectFieldKeysM :: (RenderMessage site FormMessage, RenderMessage site msg, Eq (Key a), PathPiece (Key a), ToBackendKey SqlBackend a) => [(msg, Maybe (Key a))] -> Field (HandlerFor site) (Maybe (Key a))
+selectFieldKeysM = checkMMap keyToKeyM keyMToKey . selectFieldKeys . fmap (second keyMToKey)
+  where
+    keyMToKey = maybe (toSqlKey (-1)) id
+    keyToKeyM k = if k < (toSqlKey 0) then 
+        return (Right Nothing :: Either FormMessage (Maybe (Key a))) 
+      else 
+        return (Right $ Just k)
+
+selectFieldKeys :: (RenderMessage site FormMessage, RenderMessage site msg, Eq (Key a), PathPiece (Key a)) => [(msg, Key a)] -> Field (HandlerFor site) (Key a)
+selectFieldKeys = selectField . optionsPersistKey
+
+  where
+    optionsPersistKey pairs = fmap mkOptionList $ do
+      mr <- getMessageRender
+      return $ map (\(msg, key) -> Option
+        { optionDisplay = mr msg
+        , optionInternalValue = key
+        , optionExternalValue = toPathPiece key
+        }) pairs
+
+-- TODO drop entriesId XXX
+frequentTransationField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text, a ~ FrequentTransaction) => Key Book -> Text -> Text -> m (Field m (Key a))
+frequentTransationField bookId descriptionId entriesId = runDB $ do
+  fts <- selectList [FrequentTransactionBook ==. bookId] []
+
+  ftas <- Map.fromList <$> mapM (\(Entity eId e) -> do
+      ftas <- selectList [FrequentTransactionAccountTransaction ==. eId] []
+
+      let entries = fmap (\(Entity _ fta) ->
+              let amount = frequentTransactionAccountAmount fta in
+              (frequentTransactionAccountAccount fta, toDebit amount, toCredit amount)
+            ) ftas
+
+      return (fromSqlKey eId, Aeson.object ["description" .= frequentTransactionDescription e, "entries" .= entries])
+    ) fts
+
+  let field = selectFieldKeys $ map (\(Entity eId e) -> (frequentTransactionDescription e, eId)) fts
+
+  return $ field { fieldView = view field ftas }
+
+  where
+    toDebit = id -- error "TODO" XXX
+    toCredit = id -- error "TODO" XXX
+
+    view field ftas theId name attrs val' isReq = do
+      toWidget [julius|
+        var _ = function() {
+          var ftRows = [];
+          var ftMap = #{Aeson.toJSON ftas}
+          var frequentTransaction = $("##{textToJs theId}");
+          var descriptionId = $("##{textToJs descriptionId}");
+          frequentTransaction.on('change', function() {
+            var ftId = frequentTransaction.val();
+
+            // Remove any previously inserted rows (unless it's the last row).
+            ftRows.map( function(r) {
+              if ( r.siblings().length > 0) {
+                r.remove();
+              }
+            });
+
+            // Check if none.
+            var vt = ftMap[ftId];
+            if ( vt === undefined) {
+              return;
+            }
+
+            // Set description.
+            descriptionId.val( vt["description"]);
+
+            // Remove any empty rows.
+            // TODO XXX
+
+            // Insert rows.
+            var prevNumber = undefined;
+            vt["entries"].map( function(e) {
+              var r = _addEntry( prevNumber);
+              prevNumber = r.attr("data-row-number");
+
+              var f = r.children().first();
+              f.val(e[0]);
+              
+              f = f.next();
+              f.val(e[1]);
+
+              f = f.next();
+              f.val(e[2]);
+
+              ftRows.push( r);
+            });
+
+            // Set shadows.
+            // TODO XXX
+          });
+        }();
+      |]
+      fieldView field theId name attrs val' isReq
+
+    textToJs = RawJavascript . TB.fromText
 
 
 

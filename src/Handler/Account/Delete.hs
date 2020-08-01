@@ -52,7 +52,7 @@ generateHTML bookId (Entity accountId account) isDebit formM = do
                         <a class="btn btn-default" href="@{AccountR bookId accountId}">
                             Cancel
                         <button type="submit" class="btn btn-danger">
-                            Delete Folder
+                            Delete Account
         |]
 
 canDeleteAccount accountId = do

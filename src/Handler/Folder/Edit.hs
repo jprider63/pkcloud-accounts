@@ -15,7 +15,7 @@ renderForm (Entity folderId folder) isDebit children trees = renderBootstrap3 Bo
     <*> areq (parentField folders) parentSettings (Just <$> folderAccountParent folder)
 
     where
-        parentField = check checkParent . selectFieldList
+        parentField = check checkParent . selectFieldKeysM
         checkParent Nothing = Right Nothing
         checkParent (Just fId) =
             -- Require folder to be in book.
