@@ -448,6 +448,18 @@ entriesField accounts shadows' = -- checkMMap toEntity (map toKey) $
                         return i.val();
                     };
 
+                    var findRowM = function( targetAccountId) {
+                      var rows = parent.children();
+                      for (var i = 0; i < rows.length; i++) {
+                        var rowDiv = rows.eq(i);
+                        if ( targetAccountId.toString() === getAccount( rowDiv)) {
+                          return rowDiv;
+                        }
+                      };
+                    
+                      return null;
+                    }
+
                     var isShadowUnchanged = function( sel, shadowAccountId) {
                         var shadow = sel.shadow;
                         var shadowAccountId = sel.shadowAccountId;
@@ -484,23 +496,35 @@ entriesField accounts shadows' = -- checkMMap toEntity (map toKey) $
                         // Insert new shadow.
                         var shadowAccountId = shadowMap[sel.value];
                         if ( shadowAccountId !== undefined) {
-                            // Add row.
-                            sel.shadow = _addEntry( i);
+                            // Check if row already exists.
+                            sel.shadow = findRowM( shadowAccountId);
+                            var exists = !(sel.shadow === null);
+
+                            // Otherwise, insert it.
+                            if ( !exists) {
+                              // Add row.
+                              sel.shadow = _addEntry( i);
+                            }
+
                             sel.shadowAccountId = shadowAccountId;
 
-                            // Set values.
+                            // Get account.
                             var shadowAccountField = sel.shadow.children().first();
-                            shadowAccountField.val( shadowAccountId);
 
-                            // Set debit.
+                            // Get debit.
                             var credit = getCredit( rowDiv);
-                            shadowDebitField = shadowAccountField.next();
-                            shadowDebitField.val( credit);
+                            var shadowDebitField = shadowAccountField.next();
 
-                            // Set credit.
+                            // Get credit.
                             var debit = getDebit( rowDiv);
-                            shadowCreditField = shadowDebitField.next();
-                            shadowCreditField.val( debit);
+                            var shadowCreditField = shadowDebitField.next();
+
+                            // Set values.
+                            if ( !exists) {
+                              shadowAccountField.val( shadowAccountId);
+                              shadowDebitField.val( credit);
+                              shadowCreditField.val( debit);
+                            }
 
                             // Cache current values.
                             sel.credit = credit;
@@ -643,14 +667,16 @@ frequentTransationField bookId descriptionId entriesId = runDB $ do
           var ftRows = [];
           var ftMap = #{Aeson.toJSON ftas}
           var frequentTransaction = $("##{textToJs theId}");
-          var descriptionId = $("##{textToJs descriptionId}");
+          var descriptionInput = $("##{textToJs descriptionId}");
+          var entriesRow = $("##{textToJs entriesId}");
           frequentTransaction.on('change', function() {
             var ftId = frequentTransaction.val();
 
             // Remove any previously inserted rows (unless it's the last row).
-            ftRows.map( function(r) {
+            ftRows.map( function(r, ri) {
               if ( r.siblings().length > 0) {
                 r.remove();
+                delete ftRows[ri];
               }
             });
 
@@ -661,10 +687,17 @@ frequentTransationField bookId descriptionId entriesId = runDB $ do
             }
 
             // Set description.
-            descriptionId.val( vt["description"]);
+            descriptionInput.val( vt["description"]);
 
             // Remove any empty rows.
-            // TODO XXX
+            entriesRow.children().map( function(_,c) {
+              var fields = c.children;
+
+              // Check if debit and credit are empty.
+              if ( fields[1].value === "" && fields[2].value === "") {
+                c.remove();
+              }
+            });
 
             // Insert rows.
             var prevNumber = undefined;
@@ -685,7 +718,9 @@ frequentTransationField bookId descriptionId entriesId = runDB $ do
             });
 
             // Set shadows.
-            // TODO XXX
+            ftRows.map( function(r) {
+              _selectionChanged(r[0].children[0]);
+            });
           });
         }();
       |]
