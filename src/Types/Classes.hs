@@ -1,9 +1,6 @@
 module Types.Classes where
 
-import Data.Text (Text)
-import Data.Time.Clock (UTCTime)
-
-import Import -- .NoFoundation
+import Import.NoFoundation
 
 -- class GeneralizedTransaction t where
 --     gTransactionDescription :: t -> Text

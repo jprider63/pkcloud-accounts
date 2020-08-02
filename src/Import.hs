@@ -16,6 +16,8 @@ import           Text.Julius (RawJavascript(..))
 import           Types                 as Import
 import           Yesod.Form.Bootstrap3 as Import
 
+import qualified Account
+
 -- TODO: Delete these. XXX
 pkcloudSetMessageDanger :: MonadHandler m => Text -> m ()
 pkcloudSetMessageDanger msg = setMessage [shamlet|<div >#{msg}|]
@@ -638,17 +640,17 @@ selectFieldKeys = selectField . optionsPersistKey
         }) pairs
 
 -- TODO drop entriesId XXX
-frequentTransationField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text, a ~ FrequentTransaction) => Key Book -> Text -> Text -> m (Field m (Key a))
-frequentTransationField bookId descriptionId entriesId = runDB $ do
+frequentTransationField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text, a ~ FrequentTransaction) => [AccountTree] -> Key Book -> Text -> Text -> m (Field m (Key a))
+frequentTransationField trees bookId descriptionId entriesId = runDB $ do
   fts <- selectList [FrequentTransactionBook ==. bookId] []
 
   ftas <- Map.fromList <$> mapM (\(Entity eId e) -> do
       ftas <- selectList [FrequentTransactionAccountTransaction ==. eId] []
 
-      let entries = fmap (\(Entity _ fta) ->
-              let amount = frequentTransactionAccountAmount fta in
-              (frequentTransactionAccountAccount fta, toDebit amount, toCredit amount)
-            ) ftas
+      entries <- fmap (\(aId, v) -> case v of
+          Left d -> (aId, d, 0)
+          Right c -> (aId, 0, c)
+        ) <$> lift (Account.transactionsToEntries trees ftas)
 
       return (fromSqlKey eId, Aeson.object ["description" .= frequentTransactionDescription e, "entries" .= entries])
     ) fts
@@ -658,8 +660,6 @@ frequentTransationField bookId descriptionId entriesId = runDB $ do
   return $ field { fieldView = view field ftas }
 
   where
-    toDebit = id -- error "TODO" XXX
-    toCredit = id -- error "TODO" XXX
 
     view field ftas theId name attrs val' isReq = do
       toWidget [julius|
@@ -709,10 +709,14 @@ frequentTransationField bookId descriptionId entriesId = runDB $ do
               f.val(e[0]);
               
               f = f.next();
-              f.val(e[1]);
+              if (e[1] > 0) {
+                f.val(e[1]);
+              }
 
               f = f.next();
-              f.val(e[2]);
+              if (e[2] > 0) {
+                f.val(e[2]);
+              }
 
               ftRows.push( r);
             });

@@ -14,7 +14,7 @@ data FormData = FormData {
     }
 
 renderForm bookId descM dateM entriesM trees = do
-    ftField <- frequentTransationField bookId descriptionId entriesId
+    ftField <- frequentTransationField trees bookId descriptionId entriesId
     return $ renderBootstrap3 BootstrapBasicForm $ FormData
         <$> aopt ftField frequentTransactionSettings Nothing
         <*> areq textField descriptionSettings descM
