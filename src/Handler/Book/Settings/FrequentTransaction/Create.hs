@@ -39,11 +39,11 @@ generateHTML bookId trees formM = do
 
 
 getBookSettingsFrequentCreateR :: BookId -> Handler Html
-getBookSettingsFrequentCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
+getBookSettingsFrequentCreateR = Book.layout (error "TODO") $ \(Entity bookId book) accountTree -> do
     generateHTML bookId accountTree Nothing
 
 postBookSettingsFrequentCreateR :: BookId -> Handler Html
-postBookSettingsFrequentCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
+postBookSettingsFrequentCreateR = Book.layout (error "TODO") $ \(Entity bookId book) accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 

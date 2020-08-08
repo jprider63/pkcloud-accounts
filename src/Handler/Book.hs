@@ -4,7 +4,8 @@ import qualified Database.Esqueleto as E
 
 import qualified Account
 import qualified Book
-import Import
+import qualified Breadcrumb
+import           Import
 
 -- JP: I'd probably move this to Handler.Book.Create or something.
 postBookCreateR :: Handler Value
@@ -35,20 +36,32 @@ postBookCreateR = do
 
 --JP: Change BookId to a unique BookUrl?
 getBookR :: BookId -> Handler Html
-getBookR = Book.layout $ \(Entity bookId book) accountTree -> do
+getBookR = Book.layout Breadcrumb.Book $ \(Entity bookId book) accountTree -> do
     setTitle $ toHtml $ bookName book
 
     Book.setLastOpened bookId
 
     [whamlet|
-        <h2>
-            Overview
-        <h3>
-            Featured Accounts
+        <div .pull-left>
+            <h2>
+                Featured Accounts
+        <div .pull-right>
+            <h2>
+                <small>
+                    <a href="@{AccountsR bookId}">
+                        All accounts
+        <div .clearfix>
         <div>
             ^{featuredW bookId accountTree}
-        <h3>
-            Recent Transactions
+        <div .pull-left>
+            <h2>
+                Recent Transactions
+        <div .pull-right>
+            <h2>
+                <small>
+                    <a href="@{TransactionsR bookId}">
+                        More transactions
+        <div .clearfix>
         <div>
             ^{recentW accountTree bookId}
     |]
@@ -60,29 +73,29 @@ getBookR = Book.layout $ \(Entity bookId book) accountTree -> do
                 E.where_ (ta E.^. TransactionAccountAccount `E.in_` E.valList (Account.toAccountIds accountTree))
                 return (t, ta, E.fromAlias s)
 
+                -- JP: Past couple months?
+
             -- Mark if we should display the description.
             -- TODO: Is there a faster way? XXX
             let ts = groupBy (\((Just (Entity a _)),_,_) ((Just (Entity b _)),_,_) -> a == b) $ map justFirst3 ts'
 
-            return ()
-
-            -- [whamlet|
-            --     <table .table .table-condensed>
-            --         <tr>
-            --             <th>
-            --                 Description
-            --             <th>
-            --                 Date
-            --             <th>
-            --                 Account
-            --             <th>
-            --                 Debit
-            --             <th>
-            --                 Credit
-            --             <th>
-            --                 Balance
-            --         ^{concatMap (Account.displayTransactionRow accountTree bookId . reverse) ts}
-            -- |]
+            [whamlet|
+                <table .table .table-condensed>
+                    <tr>
+                        <th>
+                            Description
+                        <th>
+                            Date
+                        <th>
+                            Account
+                        <th>
+                            Debit
+                        <th>
+                            Credit
+                        <th>
+                            Balance
+                    ^{concatMap (Account.displayTransactionRow accountTree bookId . reverse) ts}
+            |]
 
         featuredW :: BookId -> [AccountTree] -> Widget
         featuredW bookId tree =

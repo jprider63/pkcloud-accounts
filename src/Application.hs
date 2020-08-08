@@ -42,6 +42,7 @@ import Handler.Account
 import Handler.Account.Create
 import Handler.Account.Delete
 import Handler.Account.Edit
+import Handler.Accounts
 import Handler.Book
 import Handler.Book.Settings
 import Handler.Book.Settings.FrequentTransaction
@@ -59,6 +60,7 @@ import Handler.Transaction
 import Handler.Transaction.Create
 import Handler.Transaction.Delete
 import Handler.Transaction.Edit
+import Handler.Transactions
 
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the

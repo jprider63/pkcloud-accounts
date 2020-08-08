@@ -2,8 +2,9 @@ module Handler.Folder.Edit where
 
 import qualified Account
 import qualified Book
+import qualified Breadcrumb
 import qualified Folder
-import Import
+import           Import
 
 data FormData = FormData {
       formDataName :: Text
@@ -76,11 +77,11 @@ generateHTML bookId folderE@(Entity folderId _) isDebit children trees formM = d
     |]
 
 getFolderEditR :: Key Book -> Key FolderAccount -> Handler Html
-getFolderEditR = Folder.layout $ \(Entity bookId book) accountTree (FolderNode folderE balance isDebit children) ->
+getFolderEditR = Folder.layout Breadcrumb.Edit $ \(Entity bookId book) accountTree (FolderNode folderE balance isDebit children) ->
     generateHTML bookId folderE isDebit children accountTree Nothing
 
 postFolderEditR :: Key Book -> Key FolderAccount -> Handler Html
-postFolderEditR = Folder.layout $ \(Entity bookId book) accountTree (FolderNode folderE@(Entity faId _) balance isDebit children) -> do
+postFolderEditR = Folder.layout Breadcrumb.Edit $ \(Entity bookId book) accountTree (FolderNode folderE@(Entity faId _) balance isDebit children) -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 

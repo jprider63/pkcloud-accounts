@@ -2,6 +2,7 @@ module Handler.Account.Edit where
 
 import qualified Account
 import qualified Book
+import qualified Breadcrumb
 import Handler.Account.Create (FormData(..), renderForm)
 import Import
 
@@ -39,11 +40,11 @@ checkParentField isDebit trees = check $ \fId ->
 
 
 getAccountEditR :: Key Book -> Key Account -> Handler Html
-getAccountEditR = Account.layout $ \(Entity bookId _) accountE isDebit accountTree -> 
+getAccountEditR = Account.layout Breadcrumb.Edit $ \(Entity bookId _) accountE isDebit accountTree -> 
     generateHTML bookId accountE isDebit accountTree Nothing
 
 postAccountEditR :: Key Book -> Key Account -> Handler Html
-postAccountEditR = Account.layout $ \(Entity bookId book) accountE@(Entity accountId account) isDebit accountTree -> do
+postAccountEditR = Account.layout Breadcrumb.Edit $ \(Entity bookId book) accountE@(Entity accountId account) isDebit accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 

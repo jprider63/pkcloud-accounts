@@ -1,6 +1,7 @@
 module Handler.Folder.Create where
 
 import qualified Book
+import qualified Breadcrumb
 import qualified Folder
 import Import
 
@@ -39,11 +40,11 @@ generateHTML bookId trees formM = do
     |]
 
 getFolderCreateR :: Key Book -> HandlerT App IO Html
-getFolderCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
+getFolderCreateR = Book.layout (Breadcrumb.Folder Breadcrumb.Create) $ \(Entity bookId book) accountTree -> do
     generateHTML bookId accountTree Nothing
 
 postFolderCreateR :: Key Book -> HandlerT App IO Html
-postFolderCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
+postFolderCreateR = Book.layout (error "TODO") $ \(Entity bookId book) accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 

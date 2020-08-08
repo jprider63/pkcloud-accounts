@@ -71,6 +71,7 @@ library
       Account
       Application
       Book
+      Breadcrumb
       FrequentTransaction
       Folder
       Foundation
@@ -78,6 +79,7 @@ library
       Handler.Account.Create
       Handler.Account.Delete
       Handler.Account.Edit
+      Handler.Accounts
       Handler.Book
       Handler.Book.Settings
       Handler.Book.Settings.FrequentTransaction
@@ -95,6 +97,7 @@ library
       Handler.Transaction.Create
       Handler.Transaction.Delete
       Handler.Transaction.Edit
+      Handler.Transactions
       Import
       Import.NoFoundation
       Model

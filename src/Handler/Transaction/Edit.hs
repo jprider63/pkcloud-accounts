@@ -2,6 +2,7 @@ module Handler.Transaction.Edit where
 
 import qualified Account
 import qualified Book
+import qualified Breadcrumb
 import qualified Transaction
 import Handler.Transaction.Create hiding (generateHTML)
 import Import
@@ -29,11 +30,11 @@ generateHTML bookId (Entity transactionId transaction) entries trees formM = do
 
 
 getTransactionEditR :: BookId -> TransactionId -> Handler Html
-getTransactionEditR = Transaction.layout $ \(Entity bookId _) transactionE entries accountTree -> do
+getTransactionEditR = Transaction.layout Breadcrumb.Edit $ \(Entity bookId _) transactionE entries accountTree -> do
     generateHTML bookId transactionE entries accountTree Nothing
 
 postTransactionEditR :: BookId -> TransactionId -> Handler Html
-postTransactionEditR  = Transaction.layout $ \(Entity bookId book) transactionE entries accountTree -> do
+postTransactionEditR  = Transaction.layout Breadcrumb.Edit $ \(Entity bookId book) transactionE entries accountTree -> do
     let Entity transactionId transaction = transactionE
 
     -- Check that user can write to book.

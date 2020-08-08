@@ -3,11 +3,12 @@ module Handler.Transaction where
 import qualified Database.Esqueleto as E
 
 import qualified Account
+import qualified Breadcrumb
 import Import
 import qualified Transaction
 
 getTransactionR :: BookId -> TransactionId -> Handler Html
-getTransactionR = Transaction.layout $ \(Entity bookId _) (Entity transactionId transaction) entries accountTree -> do
+getTransactionR = Transaction.layout Breadcrumb.View $ \(Entity bookId _) (Entity transactionId transaction) entries accountTree -> do
     setTitle $ toHtml ("Transaction" :: Text)
 
     let ts = zip3 (repeat Nothing) entries (repeat (E.Value (Nothing :: (Maybe Nano))))

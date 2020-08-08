@@ -2,7 +2,8 @@ module Folder where
 
 import qualified Account
 import qualified Book
-import Import
+import qualified Breadcrumb
+import           Import
 
 treesToFolders :: [AccountTree] -> [(Text, FolderAccountId)]
 treesToFolders trees = concatMap (toFolders "") trees
@@ -34,8 +35,13 @@ treesToShadows trees = concatMap toShadows trees
     toShadows (AccountLeaf (Entity accountId account) _ _) | Just shadowAccountId <- accountShadow account = [(accountId, shadowAccountId)]
     toShadows (AccountLeaf _ _ _) = []
 
-layout :: (Entity Book -> [AccountTree] -> AccountTree -> Widget) -> BookId -> FolderAccountId -> Handler Html
-layout f bookId fId = flip Book.layout bookId $ \bookE accountTree -> do
+layout :: (Entity FolderAccount -> Breadcrumb.CRUD FolderAccount) -> (Entity Book -> [AccountTree] -> AccountTree -> Widget) -> BookId -> FolderAccountId -> Handler Html
+layout bc f bookId fId = do
+  -- JP: This lookup is redundant...
+  folder <- runDB $ get404 fId
+  let folderE = Entity fId folder
+  
+  flip (Book.layout (Breadcrumb.Folder $ bc folderE)) bookId $ \bookE accountTree -> do
     -- Load folder (and check that folder is in book).
     folder <- Account.requireFolder accountTree fId
 

@@ -6,7 +6,7 @@ module Import.NoFoundation
     , shortDateTime
     ) where
 
-import ClassyPrelude.Yesod   as Import hiding (getCurrentTime, selectFieldList)
+import ClassyPrelude.Yesod   as Import hiding (getCurrentTime, selectFieldList, breadcrumbs)
 import qualified ClassyPrelude.Yesod as Y
 import Data.Fixed            as Import (Nano, Centi, Fixed(..))
 import Database.Persist.Sql  as Import (fromSqlKey, toSqlKey)

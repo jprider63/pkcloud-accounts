@@ -176,6 +176,14 @@ styling = [lucius|
         .table-transactions {
             margin-top: 7px;
         }
+
+        .sidebar {
+            margin-top: 24px;
+        }
+
+        .breadcrumb {
+            margin-top: 24px;
+        }
     |]
 
 -- Define breadcrumbs.

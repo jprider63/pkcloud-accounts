@@ -5,6 +5,7 @@ import qualified Data.ByteString.Lazy as BSL
 import qualified Database.Esqueleto as E
 
 -- import qualified Account
+import           Breadcrumb (Breadcrumb, breadcrumbs)
 import           Import.NoFoundation
 import           Foundation
 import           Types
@@ -43,8 +44,8 @@ requireCanWriteBook book = do
 canViewBook :: UserId -> Book -> Bool
 canViewBook uId book = bookCreatedBy book == uId
 
-layout :: (Entity Book -> [AccountTree] -> Widget) -> BookId -> Handler Html
-layout w bookId = do
+layout :: Breadcrumb -> (Entity Book -> [AccountTree] -> Widget) -> BookId -> Handler Html
+layout breadcrumb w bookId = do
     -- Check if user is authenticated.
     uId <- requireAuthId
     
@@ -57,29 +58,43 @@ layout w bookId = do
 
     accountTree <- accountTrees bookId
 
+    let bookE = Entity bookId book
     defaultLayout $ [whamlet|
             <div .container>
                 <div .row>
-                    <div .col-xs-12>
-                        <h1>
-                            #{bookName book}
-                <div .row>
-                    <div .col-xs-3>
+                    <div .col-sm-9>
+                        <ol .breadcrumb>
+                            ^{breadcrumbW (breadcrumbs bookE breadcrumb)}
+                        ^{w bookE accountTree}
+                    <div .col-sm-3>
                         ^{sidebarW accountTree}
-                    <div .col-xs-9>
-                        ^{w (Entity bookId book) accountTree}
         |]
+                -- <div .row>
+                --     <div .col-xs-12>
+                --         <h1>
+                --             #{bookName book}
 
     where
+
+        breadcrumbW [] = mempty
+        breadcrumbW [(title, _)] = [whamlet|
+            <li .active>
+              #{title}
+          |]
+        breadcrumbW ((title, link):bs) = [whamlet|
+            <li>
+              <a href="@{link}">
+                #{title}
+          |] <> breadcrumbW bs
+
+        -- breadcrumbW book = [whamlet|
+        --     <li><a href="#">Home</a></li>
+        --     <li><a href="#">Library</a></li>
+        --     <li class="active">Data</li>
+        -- |]
         sidebarW :: [AccountTree] -> Widget
         sidebarW trees = [whamlet|
             <div .sidebar>
-                <h2>
-                    <a href="@{BookR bookId}">
-                        Overview
-                <h2>
-                    Accounts
-                ^{displayAccountTrees bookId trees}
                 <a .btn .btn-primary .btn-block href="@{TransactionCreateR bookId}">
                     New Transaction
                 <a href="@{AccountCreateR bookId}" .btn .btn-primary .btn-block>
@@ -92,6 +107,12 @@ layout w bookId = do
                     Other Books
         |]
         -- Book Settings?
+                -- <h2>
+                --     <a href="@{BookR bookId}">
+                --         Overview
+                -- <h2>
+                --     Accounts
+                -- ^{displayAccountTrees bookId trees}
 
 accountTrees :: BookId -> Handler [AccountTree]
 accountTrees bookId = runDB $ do

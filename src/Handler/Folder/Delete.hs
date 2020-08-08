@@ -1,8 +1,9 @@
 module Handler.Folder.Delete where
 
 import qualified Book
+import qualified Breadcrumb
 import qualified Folder
-import Import
+import           Import
 
 data FormData = FormData
 
@@ -63,11 +64,11 @@ generateHTML bookId folderNode formM = do
 
 
 getFolderDeleteR :: Key Book -> FolderAccountId -> Handler Html
-getFolderDeleteR = Folder.layout $ \(Entity bookId book) accountTree folderNode@(FolderNode folderE balance isDebit children) ->
+getFolderDeleteR = Folder.layout Breadcrumb.Delete $ \(Entity bookId book) accountTree folderNode@(FolderNode folderE balance isDebit children) ->
     generateHTML bookId folderNode Nothing
 
 postFolderDeleteR :: Key Book -> FolderAccountId -> Handler Html
-postFolderDeleteR = Folder.layout $ \(Entity bookId book) accountTree folderNode@(FolderNode folderE balance isDebit children) -> do
+postFolderDeleteR = Folder.layout Breadcrumb.Delete $ \(Entity bookId book) accountTree folderNode@(FolderNode folderE balance isDebit children) -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 

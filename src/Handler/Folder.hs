@@ -3,11 +3,12 @@ module Handler.Folder where
 import qualified Database.Esqueleto as E
 
 import qualified Account
+import qualified Breadcrumb
 import qualified Folder
-import Import
+import           Import
 
 getFolderR :: BookId -> FolderAccountId -> Handler Html
-getFolderR = Folder.layout $ \(Entity bookId book) accountTree (FolderNode (Entity faId fa) balance isDebit children) -> do
+getFolderR = Folder.layout Breadcrumb.View $ \(Entity bookId book) accountTree (FolderNode (Entity faId fa) balance isDebit children) -> do
     setTitle $ toHtml ("Folder" :: Text)
 
     -- Load recent transactions from this folder.

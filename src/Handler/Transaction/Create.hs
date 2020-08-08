@@ -2,6 +2,7 @@ module Handler.Transaction.Create where
 
 import qualified Account
 import qualified Book
+import qualified Breadcrumb
 import qualified Folder
 import Import
 import Text.Blaze (toMarkup)
@@ -56,11 +57,11 @@ generateHTML bookId trees formM = do
     |]
 
 getTransactionCreateR :: BookId -> Handler Html
-getTransactionCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
+getTransactionCreateR = Book.layout (Breadcrumb.Transaction Breadcrumb.Create) $ \(Entity bookId book) accountTree -> do
     generateHTML bookId accountTree Nothing
 
 postTransactionCreateR :: BookId -> Handler Html
-postTransactionCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
+postTransactionCreateR = Book.layout (Breadcrumb.Transaction Breadcrumb.Create) $ \(Entity bookId book) accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 

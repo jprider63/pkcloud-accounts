@@ -1,11 +1,13 @@
 module Handler.Account where
 
-import qualified Account
 import qualified Database.Esqueleto as E
-import Import
+
+import qualified Account
+import qualified Breadcrumb
+import           Import
 
 getAccountR :: BookId -> AccountId -> Handler Html
-getAccountR = Account.layout $ \(Entity bookId book) (Entity accountId account) accountIsDebit accountTree -> do
+getAccountR = Account.layout Breadcrumb.View $ \(Entity bookId book) (Entity accountId account) accountIsDebit accountTree -> do
     setTitle $ toHtml $ accountName account
     -- TODO: Fix this to get balance. XXX
     

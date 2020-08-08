@@ -12,6 +12,7 @@
 /books BooksR GET
 /books/new BookCreateR POST
 
+/book/#BookId/accounts AccountsR GET
 /book/#BookId/account/#AccountId AccountR GET
 /book/#BookId/account/#AccountId/delete AccountDeleteR GET POST
 /book/#BookId/account/#AccountId/edit AccountEditR GET POST
@@ -20,6 +21,7 @@
 /book/#BookId/folder/#FolderAccountId/delete FolderDeleteR GET POST
 /book/#BookId/folder/#FolderAccountId/edit FolderEditR GET POST
 /book/#BookId/folders/new FolderCreateR GET POST
+/book/#BookId/transactions TransactionsR GET
 /book/#BookId/transaction/#TransactionId TransactionR GET
 /book/#BookId/transaction/#TransactionId/delete TransactionDeleteR GET POST
 /book/#BookId/transaction/#TransactionId/edit TransactionEditR GET POST

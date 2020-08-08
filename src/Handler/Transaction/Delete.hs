@@ -2,6 +2,7 @@ module Handler.Transaction.Delete where
 
 import qualified Account
 import qualified Book
+import qualified Breadcrumb
 import qualified Transaction
 import Import
 
@@ -45,11 +46,11 @@ generateHTML bookId (Entity transactionId transaction) trees formM = do
     |]
 
 getTransactionDeleteR :: BookId -> TransactionId -> Handler Html
-getTransactionDeleteR = Transaction.layout $ \(Entity bookId _) transactionE _ accountTree -> do
+getTransactionDeleteR = Transaction.layout Breadcrumb.Delete $ \(Entity bookId _) transactionE _ accountTree -> do
     generateHTML bookId transactionE accountTree Nothing
 
 postTransactionDeleteR :: BookId -> TransactionId -> Handler Html
-postTransactionDeleteR  = Transaction.layout $ \(Entity bookId book) transactionE _ accountTree -> do
+postTransactionDeleteR  = Transaction.layout Breadcrumb.Delete $ \(Entity bookId book) transactionE _ accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 

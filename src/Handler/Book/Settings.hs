@@ -4,7 +4,7 @@ import qualified Book
 import Import
 
 getBookSettingsR :: BookId -> Handler Html
-getBookSettingsR = Book.layout $ \(Entity bookId book) accountTree -> do
+getBookSettingsR = Book.layout (error "TODO") $ \(Entity bookId book) accountTree -> do
     setTitle $ toHtml ("Settings" :: Text)
     [whamlet|
         <h2>

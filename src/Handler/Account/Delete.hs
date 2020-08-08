@@ -2,7 +2,8 @@ module Handler.Account.Delete where
 
 import qualified Account
 import qualified Book
-import Import
+import qualified Breadcrumb
+import           Import
 
 data FormData = FormData
 
@@ -62,11 +63,11 @@ canDeleteAccount accountId = do
       return $ c + c' == 0
 
 getAccountDeleteR :: Key Book -> Key Account -> Handler Html
-getAccountDeleteR = Account.layout $ \(Entity bookId book) accountE accountIsDebit accountTree -> do
+getAccountDeleteR = Account.layout Breadcrumb.Delete $ \(Entity bookId book) accountE accountIsDebit accountTree -> do
     generateHTML bookId accountE accountIsDebit Nothing
 
 postAccountDeleteR :: Key Book -> Key Account -> Handler Html
-postAccountDeleteR = Account.layout $ \(Entity bookId book) accountE@(Entity accountId _) accountIsDebit accountTree -> do
+postAccountDeleteR = Account.layout Breadcrumb.Delete $ \(Entity bookId book) accountE@(Entity accountId _) accountIsDebit accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 

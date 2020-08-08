@@ -2,6 +2,7 @@ module Handler.Account.Create where
 
 import qualified Account
 import qualified Book
+import qualified Breadcrumb
 import qualified Folder
 import Import
 
@@ -45,11 +46,11 @@ generateHTML bookId trees formM = do
     |]
 
 getAccountCreateR :: BookId -> Handler Html
-getAccountCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
+getAccountCreateR = Book.layout (Breadcrumb.Account Breadcrumb.Create) $ \(Entity bookId book) accountTree -> do
     generateHTML bookId accountTree Nothing
 
 postAccountCreateR :: BookId -> Handler Html
-postAccountCreateR = Book.layout $ \(Entity bookId book) accountTree -> do
+postAccountCreateR = Book.layout (Breadcrumb.Account Breadcrumb.Create) $ \(Entity bookId book) accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 

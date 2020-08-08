@@ -1,6 +1,7 @@
 module Account where
 
 import qualified Book
+import qualified Breadcrumb
 import qualified Database.Esqueleto as E
 import           Foundation
 import           Import.NoFoundation
@@ -70,14 +71,15 @@ getAccountNode ((leaf@(AccountLeaf (Entity aId' _) _ _)):ts) aId | aId == aId' =
 getAccountNode ((AccountLeaf _ _ _):ts) aId = getAccountNode ts aId
 getAccountNode ((FolderNode _ _ _ children):ts) aId = getAccountNode (children ++ ts) aId
 
-layout :: (Entity Book -> Entity Account -> Bool -> [AccountTree] -> Widget) -> BookId -> AccountId -> Handler Html
-layout f bookId accountId = do
+layout :: (Entity Account -> Breadcrumb.CRUD Account) -> (Entity Book -> Entity Account -> Bool -> [AccountTree] -> Widget) -> BookId -> AccountId -> Handler Html
+layout bc f bookId accountId = do
     account <- runDB $ get404 accountId
 
-    Book.layout (w account) bookId
+    let accountE = Entity accountId account
+    Book.layout (Breadcrumb.Account $ bc accountE) (w accountE) bookId
 
     where
-        w account bookE@(Entity bookId book) accountTree = do
+        w accountE bookE@(Entity bookId book) accountTree = do
             -- Check if account is in book.
             unless (isInBook accountTree accountId) $ 
                 permissionDenied ""
@@ -86,7 +88,7 @@ layout f bookId accountId = do
             accountIsDebit <- Account.isDebit accountTree accountId
 
             -- CPS for widget.
-            f bookE (Entity accountId account) accountIsDebit accountTree
+            f bookE accountE accountIsDebit accountTree
 
 displayTransactionRow :: (GeneralizedTransactionAccount ta) => [AccountTree] -> BookId -> [((Maybe (Entity Transaction)), Entity ta, E.Value (Maybe Nano))] -> Widget
 displayTransactionRow a b x = displayTransactionRow' a b True x
