@@ -1,10 +1,11 @@
 module Handler.Book.Settings where
 
 import qualified Book
-import Import
+import qualified Breadcrumb
+import           Import
 
 getBookSettingsR :: BookId -> Handler Html
-getBookSettingsR = Book.layout (error "TODO") $ \(Entity bookId book) accountTree -> do
+getBookSettingsR = Book.layout Breadcrumb.Settings $ \(Entity bookId book) accountTree -> do
     setTitle $ toHtml ("Settings" :: Text)
     [whamlet|
         <h2>

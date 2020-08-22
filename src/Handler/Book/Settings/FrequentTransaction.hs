@@ -3,11 +3,12 @@ module Handler.Book.Settings.FrequentTransaction where
 import qualified Database.Esqueleto as E
 
 import qualified Account
-import Import
+import qualified Breadcrumb
 import qualified FrequentTransaction
+import           Import
 
 getBookSettingsFrequentR :: BookId -> FrequentTransactionId -> Handler Html
-getBookSettingsFrequentR = FrequentTransaction.layout $ \(Entity bookId book) (Entity ftId ft) fts accountTree -> do
+getBookSettingsFrequentR = FrequentTransaction.layout Breadcrumb.View $ \(Entity bookId book) (Entity ftId ft) fts accountTree -> do
     setTitle $ toHtml ("Frequent Transaction" :: Text)
         
     let ts = zip3 (repeat Nothing) fts (repeat (E.Value (Nothing :: (Maybe Nano))))

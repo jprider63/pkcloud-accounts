@@ -8,17 +8,15 @@ import           Import.NoFoundation (Entity(..), Text, ($))
 import qualified Import.NoFoundation as I
 import           Foundation
 
--- type Breadcrumbs = [(Text, Maybe Route)]
 data Breadcrumb = 
-    Book -- Book
-  | Accounts
+    Accounts
   | Account (CRUD I.Account)
+  | Book
+  | FrequentTransaction (CRUD I.FrequentTransaction)
   | Transactions
   | Transaction (CRUD I.Transaction)
   | Folder (CRUD I.FolderAccount)
-  -- | BreadcrumbFolder BreadcrumbFolder
-  -- | BreadcrumbAccount (Entity Account)
-  -- | BreadcrumbSettings
+  | Settings
 
 data CRUD a = 
     View (Entity a)
@@ -26,10 +24,6 @@ data CRUD a =
   | Edit (Entity a)
   | Delete (Entity a)
 
-
--- data BreadcrumbTransaction
--- data BreadcrumbFolder
--- data BreadcrumbAccount = BreadcrumbAccount
 
 breadcrumbs :: Entity I.Book -> Breadcrumb -> [(Text, Route App)]
 breadcrumbs (Entity bookId book) breadcrumb = (I.bookName book, BookR bookId): case breadcrumb of
@@ -48,7 +42,20 @@ breadcrumbs (Entity bookId book) breadcrumb = (I.bookName book, BookR bookId): c
   Folder (View e) -> folderBreadcrumbs bookId e []
   Folder (Edit e) -> folderBreadcrumbs bookId e [("Edit Folder", FolderEditR bookId (entityKey e))]
   Folder (Delete e) -> folderBreadcrumbs bookId e [("Delete Folder", FolderDeleteR bookId (entityKey e))]
+  Settings -> settingsBreadcrumbs bookId []
+  FrequentTransaction Create -> frequentTransactionsBreadcrumbs bookId [("New Frequent Transaction", BookSettingsFrequentCreateR bookId)]
+  FrequentTransaction (View e) -> frequentTransactionBreadcrumbs bookId e []
+  FrequentTransaction (Edit e) -> frequentTransactionBreadcrumbs bookId e [("Edit Frequent Transaction", BookSettingsFrequentEditR bookId (entityKey e))]
+  FrequentTransaction (Delete e) -> frequentTransactionBreadcrumbs bookId e [("Delete Frequent Transaction", BookSettingsFrequentDeleteR bookId (entityKey e))]
 
+settingsBreadcrumbs :: I.BookId -> [(Text, Route App)] -> [(Text, Route App)]
+settingsBreadcrumbs bookId xs = ("Settings", BookSettingsR bookId):xs
+
+frequentTransactionsBreadcrumbs :: I.BookId -> [(Text, Route App)] -> [(Text, Route App)]
+frequentTransactionsBreadcrumbs bookId xs = settingsBreadcrumbs bookId $ ("Frequent Transactions", BookSettingsR bookId):xs
+
+frequentTransactionBreadcrumbs :: I.BookId -> Entity I.FrequentTransaction -> [(Text, Route App)] -> [(Text, Route App)]
+frequentTransactionBreadcrumbs bookId (Entity ftId ft) xs = frequentTransactionsBreadcrumbs bookId $ (I.frequentTransactionDescription ft, BookSettingsFrequentR bookId ftId):xs
 
 accountsBreadcrumbs :: I.BookId -> [(Text, Route App)] -> [(Text, Route App)]
 accountsBreadcrumbs bookId xs = ("Accounts", AccountsR bookId):xs

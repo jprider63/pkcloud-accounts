@@ -2,6 +2,7 @@ module Handler.Book.Settings.FrequentTransaction.Edit where
 
 import qualified Account
 import qualified Book
+import qualified Breadcrumb
 import qualified FrequentTransaction
 import           Handler.Book.Settings.FrequentTransaction.Create hiding (generateHTML)
 import           Handler.Transaction.Create (insertTransactionAccount)
@@ -29,11 +30,11 @@ generateHTML bId (Entity ftId ft) fts trees formM = do
     |]
 
 getBookSettingsFrequentEditR :: BookId -> FrequentTransactionId -> Handler Html
-getBookSettingsFrequentEditR = FrequentTransaction.layout $ \(Entity bookId _book) ftE fts accountTree -> do
+getBookSettingsFrequentEditR = FrequentTransaction.layout Breadcrumb.Edit $ \(Entity bookId _book) ftE fts accountTree -> do
     generateHTML bookId ftE fts accountTree Nothing
 
 postBookSettingsFrequentEditR :: BookId -> FrequentTransactionId -> Handler Html
-postBookSettingsFrequentEditR = FrequentTransaction.layout $ \(Entity bookId book) ftE@(Entity ftId _) fts accountTree -> do
+postBookSettingsFrequentEditR = FrequentTransaction.layout Breadcrumb.Edit $ \(Entity bookId book) ftE@(Entity ftId _) fts accountTree -> do
 
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book

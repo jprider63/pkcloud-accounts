@@ -44,7 +44,7 @@ getFolderCreateR = Book.layout (Breadcrumb.Folder Breadcrumb.Create) $ \(Entity 
     generateHTML bookId accountTree Nothing
 
 postFolderCreateR :: Key Book -> HandlerT App IO Html
-postFolderCreateR = Book.layout (error "TODO") $ \(Entity bookId book) accountTree -> do
+postFolderCreateR = Book.layout (Breadcrumb.Folder Breadcrumb.Create) $ \(Entity bookId book) accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 

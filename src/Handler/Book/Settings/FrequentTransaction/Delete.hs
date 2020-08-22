@@ -1,8 +1,9 @@
 module Handler.Book.Settings.FrequentTransaction.Delete where
 
 import qualified Book
+import qualified Breadcrumb
 import qualified FrequentTransaction
-import Import
+import           Import
 
 data FormData = FormData
 
@@ -39,11 +40,11 @@ generateHTML bookId (Entity ftId ft) trees formM = do
     |]
 
 getBookSettingsFrequentDeleteR :: BookId -> FrequentTransactionId -> Handler Html
-getBookSettingsFrequentDeleteR = FrequentTransaction.layout $ \(Entity bookId _) ftE _ accountTree ->
+getBookSettingsFrequentDeleteR = FrequentTransaction.layout Breadcrumb.Delete $ \(Entity bookId _) ftE _ accountTree ->
     generateHTML bookId ftE accountTree Nothing
 
 postBookSettingsFrequentDeleteR :: BookId -> FrequentTransactionId -> Handler Html
-postBookSettingsFrequentDeleteR = FrequentTransaction.layout $ \(Entity bookId book) ftE _ accountTree -> do
+postBookSettingsFrequentDeleteR = FrequentTransaction.layout Breadcrumb.Delete $ \(Entity bookId book) ftE _ accountTree -> do
     -- Check that user can write to book.
     handlerToWidget $ Book.requireCanWriteBook book
 
