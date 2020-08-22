@@ -81,7 +81,7 @@ postTransactionCreateR = Book.layout (Breadcrumb.Transaction Breadcrumb.Create) 
 
             handlerToWidget $ runDB $ do
                 -- Insert transaction.
-                transactionId <- insert $ Transaction description date uId
+                transactionId <- insert $ Transaction description date uId Nothing Nothing
 
                 -- Insert transaction amounts.
                 mapM_ (insertTransactionAccount TransactionAccount transactionId accountTree) entries

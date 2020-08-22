@@ -53,6 +53,9 @@ postTransactionEditR  = Transaction.layout Breadcrumb.Edit $ \(Entity bookId boo
             let (UTCTime _ time) = transactionDate transaction
             let date = UTCTime date' time
 
+            now <- getCurrentTime
+            userId <- requireAuthId
+
             handlerToWidget $ runDB $ do
                 -- Delete old transaction amounts.
                 deleteWhere [TransactionAccountTransaction ==. transactionId]
@@ -61,7 +64,7 @@ postTransactionEditR  = Transaction.layout Breadcrumb.Edit $ \(Entity bookId boo
                 mapM_ (insertTransactionAccount TransactionAccount transactionId accountTree) entries
 
                 -- Update transaction.
-                update transactionId [TransactionDescription =. description, TransactionDate =. date]
+                update transactionId [TransactionDescription =. description, TransactionDate =. date, TransactionEditedDate =. Just now, TransactionEditedBy =. Just userId]
 
             -- Set message.
             pkcloudSetMessageSuccess "Edited transaction!"

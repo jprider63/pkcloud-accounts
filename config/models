@@ -48,6 +48,8 @@ Transaction
   description Text
   date UTCTime
   createdBy UserId
+  editedBy UserId Maybe
+  editedDate UTCTime Maybe
   -- TODO: Add a PeriodId reference? XXX
 
 TransactionAccount

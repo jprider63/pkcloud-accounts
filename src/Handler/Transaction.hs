@@ -33,6 +33,9 @@ getTransactionR = Transaction.layout Breadcrumb.View $ \(Entity bookId _) (Entit
                 <div>
                     <p .form-control-static>
                         #{shortDateTime (transactionDate transaction)}
+            ^{createdByW transaction}
+            ^{editedByW transaction}
+            ^{editedDateW transaction}
             <div .form-group>
                 <label>
                     Transactions
@@ -48,4 +51,43 @@ getTransactionR = Transaction.layout Breadcrumb.View $ \(Entity bookId _) (Entit
     |]
 
         -- TODO: Separate debits and credits. Lookup accounts from account tree? XXX
+  
+  where
+    createdByW t = do
+      user <- handlerToWidget $ runDB $ get404 $ transactionCreatedBy t
+      
+      [whamlet|
+          <div .form-group>
+              <label>
+                  Created by
+              <div>
+                  <p .form-control-static>
+                      #{userUsername user}
+      |]
+      -- JP: Link to user?
+
+    editedByW t | Just userId <- transactionEditedBy t = do
+      user <- handlerToWidget $ runDB $ get404 userId
         
+      [whamlet|
+          <div .form-group>
+              <label>
+                  Edited by
+              <div>
+                  <p .form-control-static>
+                      #{userUsername user}
+      |]
+      -- JP: Link to user?
+    editedByW _t | otherwise = mempty
+
+    editedDateW t | Just date <- transactionEditedDate t = do
+      [whamlet|
+          <div .form-group>
+              <label>
+                  Edited on
+              <div>
+                  <p .form-control-static>
+                      #{shortDateTime date}
+      |]
+    editedDateW _t | otherwise = mempty
+
