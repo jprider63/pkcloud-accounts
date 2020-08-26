@@ -28,6 +28,7 @@ library
     , yesod
     , yesod-core
     , yesod-auth
+    , yesod-auth-hashdb
     , yesod-static
     , yesod-form
     , bytestring

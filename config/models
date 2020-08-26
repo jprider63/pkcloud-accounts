@@ -18,8 +18,9 @@
 
 User
   username Text
-  UniqueUser username
+  password Text Maybe
   dateCreated UTCTime
+  UniqueUser username
 
 Book json
   createdBy UserId

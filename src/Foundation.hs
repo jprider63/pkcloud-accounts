@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -12,7 +13,11 @@ import Database.Persist.Sql (ConnectionPool, runSqlPool)
 import Text.Jasmine         (minifym)
 
 -- Used only when in "auth-dummy-login" setting is enabled.
+#if DEVELOPMENT
 import Yesod.Auth.Dummy
+#endif
+import Yesod.Auth.HashDB
+import Yesod.Auth.Message (AuthMessage(InvalidLogin))
 
 -- import Yesod.Auth.OpenId    (authOpenId, IdentifierType (Claimed))
 import Yesod.Default.Util   (addStaticContentExternal)
@@ -43,9 +48,9 @@ instance Yesod App where
             Just root -> root
 
     -- Store session data on the client in encrypted cookies,
-    -- default session idle timeout is 120 minutes
+    -- default session idle timeout
     makeSessionBackend _ = Just <$> defaultClientSessionBackend
-        120    -- timeout in minutes
+        (60 * 24 * 7)    -- timeout in minutes (1 week)
         "config/client_session_key.aes"
 
     -- Yesod Middleware allows you to run code before and after each handler function.
@@ -61,13 +66,13 @@ instance Yesod App where
     authRoute _ = Just $ AuthR LoginR
 
     -- Routes not requiring authentication.
-    isAuthorized (AuthR _) _ = return Authorized
-    isAuthorized HomeR _ = return Authorized
-    isAuthorized (StaticR _) _ = return Authorized
-    isAuthorized FaviconR _ = return Authorized
-    isAuthorized RobotsR _ = return Authorized
+    -- isAuthorized (AuthR _) _ = return Authorized
+    -- isAuthorized HomeR _ = return Authorized
+    -- isAuthorized (StaticR _) _ = return Authorized
+    -- isAuthorized FaviconR _ = return Authorized
+    -- isAuthorized RobotsR _ = return Authorized
 
-    isAuthorized BookCreateR _ = isAuthenticated
+    -- isAuthorized BookCreateR _ = isAuthenticated
     isAuthorized _ _ = return Authorized
 
     -- This function creates static content files in the static folder
@@ -216,14 +221,22 @@ instance YesodAuth App where
         case x of
             Just (Entity uid _) -> return $ Authenticated uid
             Nothing -> do
-                 now <- lift getCurrentTime
-                 Authenticated <$> insert User
-                    { userUsername = credsIdent creds
-                    , userDateCreated = now
-                    }
+                 return $ UserError InvalidLogin
+
+                 -- now <- lift getCurrentTime
+                 -- Authenticated <$> insert User
+                 --    { userUsername = credsIdent creds
+                 --    , userPassword = Nothing
+                 --    , userDateCreated = now
+                 --    }
 
     -- You can add other plugins like Google Email, email or OAuth here
-    authPlugins app = [authDummy]
+    authPlugins app = [
+#if DEVELOPMENT
+        authDummy
+#endif
+      , authHashDB (Just . UniqueUser)
+      ]
 
     -- authHttpManager = getHttpManager
 
@@ -234,6 +247,10 @@ isAuthenticated = do
     return $ case muid of
         Nothing -> Unauthorized "You must login to access this page"
         Just _ -> Authorized
+
+instance HashDBUser User where
+  userPasswordHash = userPassword
+  setPasswordHash h p = p { userPassword = Just h }
 
 instance YesodAuthPersist App
 
