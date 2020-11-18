@@ -39,6 +39,7 @@ library
     , persistent
     , persistent-postgresql
     , persistent-template
+    , pkcloud-core
     , template-haskell
     , shakespeare
     , hjsmin
@@ -69,36 +70,39 @@ library
   else
     ghc-options: -Wall -fwarn-tabs -O2
   exposed-modules:
+      PKCloud.Accounts
+  other-modules:
+      PKCloud.Accounts.Core
+      PKCloud.Accounts.Import
+      PKCloud.Accounts.Routes
+      PKCloud.Accounts.Handler.Account
+      PKCloud.Accounts.Handler.Account.Create
+      PKCloud.Accounts.Handler.Account.Delete
+      PKCloud.Accounts.Handler.Account.Edit
+      PKCloud.Accounts.Handler.Accounts
+      PKCloud.Accounts.Handler.Book
+      PKCloud.Accounts.Handler.Book.Settings
+      PKCloud.Accounts.Handler.Book.Settings.FrequentTransaction
+      PKCloud.Accounts.Handler.Book.Settings.FrequentTransaction.Create
+      PKCloud.Accounts.Handler.Book.Settings.FrequentTransaction.Delete
+      PKCloud.Accounts.Handler.Book.Settings.FrequentTransaction.Edit
+      PKCloud.Accounts.Handler.Books
+      PKCloud.Accounts.Handler.Folder
+      PKCloud.Accounts.Handler.Folder.Create
+      PKCloud.Accounts.Handler.Folder.Delete
+      PKCloud.Accounts.Handler.Folder.Edit
+      PKCloud.Accounts.Handler.Home
+      PKCloud.Accounts.Handler.Transaction
+      PKCloud.Accounts.Handler.Transaction.Create
+      PKCloud.Accounts.Handler.Transaction.Delete
+      PKCloud.Accounts.Handler.Transaction.Edit
+      PKCloud.Accounts.Handler.Transactions
+
       Account
-      Application
       Book
       Breadcrumb
       FrequentTransaction
       Folder
-      Foundation
-      Handler.Account
-      Handler.Account.Create
-      Handler.Account.Delete
-      Handler.Account.Edit
-      Handler.Accounts
-      Handler.Book
-      Handler.Book.Settings
-      Handler.Book.Settings.FrequentTransaction
-      Handler.Book.Settings.FrequentTransaction.Create
-      Handler.Book.Settings.FrequentTransaction.Delete
-      Handler.Book.Settings.FrequentTransaction.Edit
-      Handler.Books
-      Handler.Common
-      Handler.Folder
-      Handler.Folder.Create
-      Handler.Folder.Delete
-      Handler.Folder.Edit
-      Handler.Home
-      Handler.Transaction
-      Handler.Transaction.Create
-      Handler.Transaction.Delete
-      Handler.Transaction.Edit
-      Handler.Transactions
       Import
       Import.NoFoundation
       Model
@@ -108,110 +112,110 @@ library
       Types.Classes
       Transaction
   default-language: Haskell2010
-  extensions: NoImplicitPrelude, ViewPatterns, OverloadedStrings, TemplateHaskell, QuasiQuotes, TypeFamilies, MultiParamTypeClasses, FlexibleContexts, ScopedTypeVariables, RecordWildCards, LambdaCase
+  extensions: NoImplicitPrelude, ViewPatterns, OverloadedStrings, TemplateHaskell, QuasiQuotes, TypeFamilies, MultiParamTypeClasses, FlexibleContexts, ScopedTypeVariables, RecordWildCards, LambdaCase, TypeFamilyDependencies, StandaloneDeriving, FlexibleInstances
 
-executable pkcloud-accounts
-  main-is: main.hs
-  hs-source-dirs:
-      app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      base
-    , classy-prelude-yesod
-    , foreign-store
-    , yesod
-    , yesod-core
-    , yesod-auth
-    , yesod-static
-    , yesod-form
-    , classy-prelude
-    , classy-prelude-conduit
-    , bytestring
-    , text
-    , persistent
-    , persistent-postgresql
-    , persistent-template
-    , template-haskell
-    , shakespeare
-    , hjsmin
-    , monad-control
-    , wai-extra
-    , yaml
-    , http-conduit
-    , directory
-    , warp
-    , data-default
-    , aeson
-    , conduit
-    , monad-logger
-    , fast-logger
-    , wai-logger
-    , file-embed
-    , safe
-    , unordered-containers
-    , containers
-    , vector
-    , time
-    , case-insensitive
-    , wai
-    , pkcloud-accounts
-  if flag(library-only)
-    buildable: False
-  other-modules:
-      DevelMain
-  default-language: Haskell2010
-
-test-suite test
-  type: exitcode-stdio-1.0
-  main-is: Spec.hs
-  hs-source-dirs:
-      test
-  ghc-options: -Wall
-  build-depends:
-      base >=4.8.2.0 && <4.9 || >=4.9.1.0 && <5
-    , classy-prelude-yesod >=0.10.2 && <1.0 || >=1.1
-    , yesod >=1.4.3 && <1.5
-    , yesod-core >=1.4.30 && <1.5
-    , yesod-auth >=1.4.0 && <1.5
-    , yesod-static >=1.4.0.3 && <1.6
-    , yesod-form >=1.4.0 && <1.5
-    , classy-prelude >=0.10.2
-    , classy-prelude-conduit >=0.10.2
-    , bytestring >=0.9 && <0.11
-    , text >=0.11 && <2.0
-    , persistent >=2.0 && <2.8
-    , persistent-postgresql >=2.1.1 && <2.8
-    , persistent-template >=2.0 && <2.8
-    , template-haskell
-    , shakespeare >=2.0 && <2.1
-    , hjsmin >=0.1 && <0.3
-    , monad-control >=0.3 && <1.1
-    , wai-extra >=3.0 && <3.1
-    , yaml >=0.8 && <0.9
-    , http-conduit >=2.1 && <2.3
-    , directory >=1.1 && <1.4
-    , warp >=3.0 && <3.3
-    , data-default
-    , aeson >=0.6 && <1.3
-    , conduit >=1.0 && <2.0
-    , monad-logger >=0.3 && <0.4
-    , fast-logger >=2.2 && <2.5
-    , wai-logger >=2.2 && <2.4
-    , file-embed
-    , safe
-    , unordered-containers
-    , containers
-    , vector
-    , time
-    , case-insensitive
-    , wai
-    , pkcloud-accounts
-    , hspec >=2.0.0
-    , yesod-test
-  other-modules:
-      Handler.CommentSpec
-      Handler.CommonSpec
-      Handler.HomeSpec
-      Handler.ProfileSpec
-      TestImport
-  default-language: Haskell2010
+-- executable pkcloud-accounts
+--   main-is: main.hs
+--   hs-source-dirs:
+--       app
+--   ghc-options: -threaded -rtsopts -with-rtsopts=-N
+--   build-depends:
+--       base
+--     , classy-prelude-yesod
+--     , foreign-store
+--     , yesod
+--     , yesod-core
+--     , yesod-auth
+--     , yesod-static
+--     , yesod-form
+--     , classy-prelude
+--     , classy-prelude-conduit
+--     , bytestring
+--     , text
+--     , persistent
+--     , persistent-postgresql
+--     , persistent-template
+--     , template-haskell
+--     , shakespeare
+--     , hjsmin
+--     , monad-control
+--     , wai-extra
+--     , yaml
+--     , http-conduit
+--     , directory
+--     , warp
+--     , data-default
+--     , aeson
+--     , conduit
+--     , monad-logger
+--     , fast-logger
+--     , wai-logger
+--     , file-embed
+--     , safe
+--     , unordered-containers
+--     , containers
+--     , vector
+--     , time
+--     , case-insensitive
+--     , wai
+--     , pkcloud-accounts
+--   if flag(library-only)
+--     buildable: False
+--   other-modules:
+--       DevelMain
+--   default-language: Haskell2010
+-- 
+-- test-suite test
+--   type: exitcode-stdio-1.0
+--   main-is: Spec.hs
+--   hs-source-dirs:
+--       test
+--   ghc-options: -Wall
+--   build-depends:
+--       base >=4.8.2.0 && <4.9 || >=4.9.1.0 && <5
+--     , classy-prelude-yesod >=0.10.2 && <1.0 || >=1.1
+--     , yesod >=1.4.3 && <1.5
+--     , yesod-core >=1.4.30 && <1.5
+--     , yesod-auth >=1.4.0 && <1.5
+--     , yesod-static >=1.4.0.3 && <1.6
+--     , yesod-form >=1.4.0 && <1.5
+--     , classy-prelude >=0.10.2
+--     , classy-prelude-conduit >=0.10.2
+--     , bytestring >=0.9 && <0.11
+--     , text >=0.11 && <2.0
+--     , persistent >=2.0 && <2.8
+--     , persistent-postgresql >=2.1.1 && <2.8
+--     , persistent-template >=2.0 && <2.8
+--     , template-haskell
+--     , shakespeare >=2.0 && <2.1
+--     , hjsmin >=0.1 && <0.3
+--     , monad-control >=0.3 && <1.1
+--     , wai-extra >=3.0 && <3.1
+--     , yaml >=0.8 && <0.9
+--     , http-conduit >=2.1 && <2.3
+--     , directory >=1.1 && <1.4
+--     , warp >=3.0 && <3.3
+--     , data-default
+--     , aeson >=0.6 && <1.3
+--     , conduit >=1.0 && <2.0
+--     , monad-logger >=0.3 && <0.4
+--     , fast-logger >=2.2 && <2.5
+--     , wai-logger >=2.2 && <2.4
+--     , file-embed
+--     , safe
+--     , unordered-containers
+--     , containers
+--     , vector
+--     , time
+--     , case-insensitive
+--     , wai
+--     , pkcloud-accounts
+--     , hspec >=2.0.0
+--     , yesod-test
+--   other-modules:
+--       Handler.CommentSpec
+--       Handler.CommonSpec
+--       Handler.HomeSpec
+--       Handler.ProfileSpec
+--       TestImport
+--   default-language: Haskell2010

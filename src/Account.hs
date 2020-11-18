@@ -3,7 +3,6 @@ module Account where
 import qualified Book
 import qualified Breadcrumb
 import qualified Database.Esqueleto as E
-import           Foundation
 import           Import.NoFoundation
 import           Types
 import           Types.Classes

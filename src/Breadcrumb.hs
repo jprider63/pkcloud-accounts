@@ -4,9 +4,9 @@ module Breadcrumb (
   , breadcrumbs
   ) where
 
-import           Import.NoFoundation (Entity(..), Text, ($))
+import           Import.NoFoundation (Entity(..), Text, Route)
 import qualified Import.NoFoundation as I
-import           Foundation
+import qualified Import as I
 
 data Breadcrumb = 
     Accounts

@@ -7,7 +7,6 @@ import qualified Data.Map as Map
 import qualified Data.Text.Lazy.Builder as TB
 import qualified Data.Text.Read as TR
 import qualified Database.Esqueleto as E
-import           Foundation            as Import
 import           Import.NoFoundation   as Import
 import           Text.Blaze
 import           Text.Blaze.Html.Renderer.String (renderHtml)
@@ -19,11 +18,13 @@ import           Yesod.Form.Bootstrap3 as Import
 import qualified Account
 -- import           Breadcrumbs           as Import
 
+import           PKCloud.Accounts.Core as Import
+
 -- TODO: Delete these. XXX
-pkcloudSetMessageDanger :: MonadHandler m => Text -> m ()
-pkcloudSetMessageDanger msg = setMessage [shamlet|<div >#{msg}|]
-pkcloudSetMessageSuccess :: MonadHandler m => Text -> m ()
-pkcloudSetMessageSuccess = pkcloudSetMessageDanger
+-- pkcloudSetMessageDanger :: MonadHandler m => Text -> m ()
+-- pkcloudSetMessageDanger msg = setMessage [shamlet|<div >#{msg}|]
+-- pkcloudSetMessageSuccess :: MonadHandler m => Text -> m ()
+-- pkcloudSetMessageSuccess = pkcloudSetMessageDanger
 
 -- TODO: Move to pkcloud-core XXX
 eitherField :: RenderMessage site FormMessage => Text -> (FieldSettings site, Field (HandlerT site m) a) -> (FieldSettings site, Field (HandlerT site m) b) -> Field (HandlerT site m) (Either a b)
@@ -330,7 +331,7 @@ transactionQuery = E.from $ \(t `E.InnerJoin` ta) -> do
     s <- E.as $ E.over (E.sum_ (ta E.^. TransactionAccountAmount)) (Just $ ta E.^. TransactionAccountAccount) [E.asc (t E.^. TransactionDate), E.asc (t E.^. TransactionId)]
     return (t, ta, s)
 
-entriesField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text, a ~ Account) => [(Text, Key a)] -> [(Key a, Key a)] -> Field m [(Key a, Either Nano Nano)]
+entriesField :: forall m a . (ToBackendKey SqlBackend a, SubHandlerFor (PKCloudAccountsApp master) master ~ m, RenderMessage (PKCloudAccountsApp master) Text, a ~ (Account Master)) => [(Text, Key a)] -> [(Key a, Key a)] -> Field m [(Key a, Either Nano Nano)]
 -- entriesField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text) => [(Text, Key a)] -> Field m [(Entity a, Either Nano Nano)]
 entriesField accounts shadows' = -- checkMMap toEntity (map toKey) $ 
     Field parse view UrlEncoded
@@ -641,7 +642,7 @@ selectFieldKeys = selectField . optionsPersistKey
         }) pairs
 
 -- TODO drop entriesId XXX
-frequentTransationField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text, a ~ FrequentTransaction) => [AccountTree] -> Key Book -> Text -> Text -> m (Field m (Key a))
+frequentTransationField :: forall master m a . (ToBackendKey SqlBackend a, SubHandlerFor (PKCloudAccountsApp master) master ~ m, RenderMessage (PKCloudAccountsApp master) Text, a ~ (FrequentTransaction master)) => [AccountTree] -> Key Book -> Text -> Text -> m (Field m (Key a))
 frequentTransationField trees bookId descriptionId entriesId = runDB $ do
   fts <- selectList [FrequentTransactionBook ==. bookId] []
 

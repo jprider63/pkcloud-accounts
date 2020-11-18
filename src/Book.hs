@@ -7,7 +7,6 @@ import qualified Database.Esqueleto as E
 -- import qualified Account
 import           Breadcrumb (Breadcrumb, breadcrumbs)
 import           Import.NoFoundation
-import           Foundation
 import           Types
 
 _lastOpenedBookKey :: Text

@@ -232,10 +232,10 @@ instance YesodAuth App where
 
     -- You can add other plugins like Google Email, email or OAuth here
     authPlugins app = [
+        authHashDB (Just . UniqueUser)
 #if DEVELOPMENT
-        authDummy
+      , authDummy
 #endif
-      , authHashDB (Just . UniqueUser)
       ]
 
     -- authHttpManager = getHttpManager
