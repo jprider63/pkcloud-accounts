@@ -36,6 +36,7 @@ library
     , classy-prelude-conduit
     , esqueleto
     , text
+    , mtl
     , persistent
     , persistent-postgresql
     , persistent-template
@@ -105,7 +106,6 @@ library
       Folder
       Import
       Import.NoFoundation
-      Model
       Settings
       Settings.StaticFiles
       Types

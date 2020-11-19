@@ -2,17 +2,17 @@ module Types where
 
 import ClassyPrelude.Yesod   hiding (getCurrentTime)
 import Data.Fixed            (Nano)
-import Model
+import PKCloud.Accounts.Import
 
-data AccountTree = 
+data AccountTree master = 
       FolderNode {
-        folderNode :: Entity FolderAccount
+        folderNode :: Entity (FolderAccount master)
       , folderNodeBalance :: Nano
       , folderNodeIsDebit :: Bool
-      , folderNodeChildren :: [AccountTree]
+      , folderNodeChildren :: [AccountTree master]
       }
     | AccountLeaf {
-        accountLeaf :: Entity Account
+        accountLeaf :: Entity (Account master)
       , accountLeafBalance :: Nano
       , accountLeafIsDebit :: Bool
       }

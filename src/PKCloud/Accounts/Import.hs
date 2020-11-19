@@ -11,8 +11,8 @@ type FrequentTransactionId master = Key (FrequentTransaction master)
 type TransactionId master = Key (Transaction master)
 
 class (SubEntity (Book master), SubEntity (Account master), SubEntity (BookFolderAccount master), SubEntity (FolderAccount master), SubEntity (Transaction master), SubEntity (TransactionAccount master), SubEntity (FrequentTransaction master), SubEntity (FrequentTransactionAccount master)) => PKCloudAccounts master where
-  type Book master = b | b -> master
 
+  type Book master = b | b -> master
   pkBook :: AuthId master -> Text -> UTCTime -> Book master
   pkBookIdField :: EntityField (Book master) (Key (Book master))
   pkBookCreatedBy :: Book master -> AuthId master
@@ -28,7 +28,15 @@ class (SubEntity (Book master), SubEntity (Account master), SubEntity (BookFolde
   pkAccountFeatured :: Account master -> Bool
 
   type BookFolderAccount master = t | t -> master
+  pkBookFolderAccountBook :: BookFolderAccount master -> BookId master
+  pkBookFolderAccountFolder :: BookFolderAccount master -> FolderAccountId master
+  pkBookFolderAccountIsDebit :: BookFolderAccount master -> Bool
+  pkBookFolderAccountUniqueBookFolder :: BookId master -> FolderAccountId master -> Unique (BookFolderAccount master)
+  -- UniqueBookFolder book folder
+
   type FolderAccount master = t | t -> master
+  pkFolderAccountName :: FolderAccount master -> Text
+  pkFolderAccountParent :: FolderAccount master -> Maybe (FolderAccountId master)
 
   type Transaction master = t | t -> master
   pkTransactionIdField :: EntityField (Transaction master) (Key (Transaction master))
@@ -46,7 +54,14 @@ class (SubEntity (Book master), SubEntity (Account master), SubEntity (BookFolde
   pkTransactionAccountAmount :: TransactionAccount master -> Nano
 
   type FrequentTransaction master = t | t -> master
+  pkFrequentTransactionBook :: FrequentTransaction master -> BookId master
+  pkFrequentTransactionDescription :: FrequentTransaction master -> Text
+  pkFrequentTransactionCreatedBy :: FrequentTransaction master -> AuthId master
+
   type FrequentTransactionAccount master = t | t -> master
+  pkFrequentTransactionAccountTransaction :: FrequentTransactionAccount master -> FrequentTransactionId master
+  pkFrequentTransactionAccountAccount :: FrequentTransactionAccount master -> AccountId master
+  pkFrequentTransactionAccountAmount :: FrequentTransactionAccount master -> Nano
 
 -- Book json
 --   createdBy UserId

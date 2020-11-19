@@ -12,11 +12,11 @@ import           Types
 _lastOpenedBookKey :: Text
 _lastOpenedBookKey = "_pkcloud_accounts_lastopened"
 
-setLastOpened :: MonadHandler m => BookId -> m ()
+setLastOpened :: (PKCloudAccounts master, MonadHandler m, m ~ HandlerFor master) => BookId master -> m ()
 setLastOpened bookId = 
     setSessionBS _lastOpenedBookKey $ BSL.toStrict $ Aeson.encode bookId
 
-getLastOpened :: Handler (Maybe BookId)
+getLastOpened :: HandlerFor master (Maybe (BookId master))
 getLastOpened = do
     -- Get current user.
     userId <- requireAuthId
@@ -40,10 +40,10 @@ requireCanWriteBook book = do
     when (bookCreatedBy book /= uId) $ 
         permissionDenied ""
 
-canViewBook :: UserId -> Book -> Bool
+canViewBook :: AuthId master -> Book master -> Bool
 canViewBook uId book = bookCreatedBy book == uId
 
-layout :: Breadcrumb -> (Entity Book -> [AccountTree] -> Widget) -> BookId -> Handler Html
+layout :: Breadcrumb master -> (Entity (Book master) -> [AccountTree master] -> WidgetFor master ()) -> BookId master -> HandlerFor master Html
 layout breadcrumb w bookId = do
     -- Check if user is authenticated.
     uId <- requireAuthId
@@ -91,7 +91,7 @@ layout breadcrumb w bookId = do
         --     <li><a href="#">Library</a></li>
         --     <li class="active">Data</li>
         -- |]
-        sidebarW :: [AccountTree] -> Widget
+        sidebarW :: [AccountTree master] -> WidgetFor master ()
         sidebarW trees = [whamlet|
             <div .sidebar>
                 <a .btn .btn-primary .btn-block href="@{TransactionCreateR bookId}">
@@ -113,7 +113,7 @@ layout breadcrumb w bookId = do
                 --     Accounts
                 -- ^{displayAccountTrees bookId trees}
 
-accountTrees :: BookId -> Handler [AccountTree]
+accountTrees :: BookId master -> HandlerFor master [AccountTree master]
 accountTrees bookId = runDB $ do
     -- Get book folders.
     bookFolders <- E.select $ E.from $ \(bfa `E.InnerJoin` fa) -> do
@@ -125,7 +125,7 @@ accountTrees bookId = runDB $ do
     -- Get each folder's tree.
     mapM (folderAccountTree . fmap E.unValue) bookFolders
 
-folderAccountTree :: (Entity FolderAccount, Bool) -> ReaderT SqlBackend Handler AccountTree
+folderAccountTree :: (Entity (FolderAccount master), Bool) -> ReaderT SqlBackend (HandlerFor master) (AccountTree master)
 folderAccountTree (folderE@(Entity fId _), isDebit) = do
     -- Get child folders.
     folders' <- selectList [FolderAccountParent ==. Just fId] []
@@ -147,7 +147,7 @@ folderAccountTree (folderE@(Entity fId _), isDebit) = do
             return $ AccountLeaf accountE balance isDebit
 
         -- JP: Move to Import or Account?
-        queryAccountBalance :: MonadHandler m => AccountId -> ReaderT SqlBackend m Nano
+        queryAccountBalance :: MonadHandler m => AccountId master -> ReaderT SqlBackend m Nano
         queryAccountBalance aId = do
             res <- E.select $ E.from $ \a -> do
                 E.where_ (a E.^. TransactionAccountAccount E.==. E.val aId)
@@ -156,10 +156,10 @@ folderAccountTree (folderE@(Entity fId _), isDebit) = do
                 [E.Value (Just x)] -> return x
                 _ -> return 0
         
-displayAccountTrees :: BookId -> [AccountTree] -> Widget
+displayAccountTrees :: PKCloudAccounts master => BookId master -> [AccountTree master] -> WidgetFor (PKCloudAccountsApp master) ()
 displayAccountTrees bookId trees = [whamlet|
         <ul .list-group .list-group-collapse>
-            ^{concatMap sidebarAccountTree trees}
+            ^{mconcat $ map sidebarAccountTree trees}
     |]
 
     where
@@ -168,16 +168,16 @@ displayAccountTrees bookId trees = [whamlet|
         sidebarAccountTree (FolderNode (Entity folderId folder) balance isDebit children) =
             [whamlet|
                 <a .list-group-item href="@{FolderR bookId folderId}">
-                    #{folderAccountName folder}
+                    #{pkFolderAccountName folder}
                     <span .badge .badge-balance>
                         #{dollar balance}
                 <ul .list-group>
-                    ^{concatMap sidebarAccountTree children}
+                    ^{mconcat $ map sidebarAccountTree children}
             |]
         sidebarAccountTree (AccountLeaf (Entity accountId account) balance isDebit) =
             [whamlet|
                 <a .list-group-item href="@{AccountR bookId accountId}">
-                    #{accountName account}
+                    #{pkAccountName account}
                     <span .badge .badge-balance>
                         #{dollar balance}
             |]

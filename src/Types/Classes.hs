@@ -1,7 +1,7 @@
 module Types.Classes where
 
 import Import.NoFoundation
-import PKCloud.Accounts.Import
+-- import PKCloud.Accounts.Import
 
 -- class GeneralizedTransaction t where
 --     gTransactionDescription :: t -> Text
@@ -26,19 +26,20 @@ import PKCloud.Accounts.Import
 --     gTransactionRoute = BookSettingsFrequentR
 
 
-class GeneralizedTransactionAccount master ta where
+class GeneralizedTransactionAccount ta where
     gTransactionAccountAccount :: ta -> (AccountId master)
 
     gTransactionAccountAmount :: ta -> Nano
 
 
-instance (TransactionAccount master ~ ta) => GeneralizedTransactionAccount master ta where
-    gTransactionAccountAccount = pkTransactionAccountAccount
-
-    gTransactionAccountAmount = pkTransactionAccountAmount
-
-instance (FrequentTransactionAccount master ~ fta) => GeneralizedTransactionAccount fta where
-    gTransactionAccountAccount = frequentTransactionAccountAccount
-
-    gTransactionAccountAmount = frequentTransactionAccountAmount
+-- TODO
+-- instance (PKCloudAccounts master, TransactionAccount master ~ ta) => GeneralizedTransactionAccount master ta where
+--     gTransactionAccountAccount = pkTransactionAccountAccount
+-- 
+--     gTransactionAccountAmount = pkTransactionAccountAmount
+-- 
+-- instance (FrequentTransactionAccount master ~ fta) => GeneralizedTransactionAccount fta where
+--     gTransactionAccountAccount = frequentTransactionAccountAccount
+-- 
+--     gTransactionAccountAmount = frequentTransactionAccountAmount
 
