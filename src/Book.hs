@@ -16,7 +16,7 @@ setLastOpened :: (PKCloudAccounts master, MonadHandler m, m ~ HandlerFor master)
 setLastOpened bookId = 
     setSessionBS _lastOpenedBookKey $ BSL.toStrict $ Aeson.encode bookId
 
-getLastOpened :: HandlerFor master (Maybe (BookId master))
+getLastOpened :: PKCloudAccounts master => HandlerFor master (Maybe (BookId master))
 getLastOpened = do
     -- Get current user.
     userId <- requireAuthId
@@ -37,13 +37,13 @@ getLastOpened = do
 
 requireCanWriteBook book = do
     uId <- requireAuthId
-    when (bookCreatedBy book /= uId) $ 
+    when (pkBookCreatedBy book /= uId) $ 
         permissionDenied ""
 
-canViewBook :: AuthId master -> Book master -> Bool
-canViewBook uId book = bookCreatedBy book == uId
+canViewBook :: PKCloudAccounts master => AuthId master -> Book master -> Bool
+canViewBook uId book = error "TODO: switch to pkcloud auth" -- pkBookCreatedBy book == uId
 
-layout :: Breadcrumb master -> (Entity (Book master) -> [AccountTree master] -> WidgetFor master ()) -> BookId master -> HandlerFor master Html
+layout :: PKCloudAccounts master => Breadcrumb master -> (Entity (Book master) -> [AccountTree master] -> WidgetFor master ()) -> BookId master -> HandlerFor master Html
 layout breadcrumb w bookId = do
     -- Check if user is authenticated.
     uId <- requireAuthId
@@ -91,7 +91,7 @@ layout breadcrumb w bookId = do
         --     <li><a href="#">Library</a></li>
         --     <li class="active">Data</li>
         -- |]
-        sidebarW :: [AccountTree master] -> WidgetFor master ()
+        -- sidebarW :: [AccountTree master] -> WidgetFor master ()
         sidebarW trees = [whamlet|
             <div .sidebar>
                 <a .btn .btn-primary .btn-block href="@{TransactionCreateR bookId}">
@@ -113,26 +113,26 @@ layout breadcrumb w bookId = do
                 --     Accounts
                 -- ^{displayAccountTrees bookId trees}
 
-accountTrees :: BookId master -> HandlerFor master [AccountTree master]
+accountTrees :: PKCloudAccounts master => BookId master -> HandlerFor master [AccountTree master]
 accountTrees bookId = runDB $ do
     -- Get book folders.
     bookFolders <- E.select $ E.from $ \(bfa `E.InnerJoin` fa) -> do
-        E.on (bfa E.^. BookFolderAccountFolder E.==. fa E.^. FolderAccountId)
-        E.where_ (bfa E.^. BookFolderAccountBook E.==. E.val bookId)
-        E.orderBy [E.asc (bfa E.^. BookFolderAccountId)]
-        return (fa, bfa E.^. BookFolderAccountIsDebit)
+        E.on (bfa E.^. pkBookFolderAccountFolderField E.==. fa E.^. pkFolderAccountIdField)
+        E.where_ (bfa E.^. pkBookFolderAccountBookField E.==. E.val bookId)
+        E.orderBy [E.asc (bfa E.^. pkBookFolderAccountIdField)]
+        return (fa, bfa E.^. pkBookFolderAccountIsDebitField)
 
     -- Get each folder's tree.
     mapM (folderAccountTree . fmap E.unValue) bookFolders
 
-folderAccountTree :: (Entity (FolderAccount master), Bool) -> ReaderT SqlBackend (HandlerFor master) (AccountTree master)
+folderAccountTree :: PKCloudAccounts master => (Entity (FolderAccount master), Bool) -> ReaderT SqlBackend (HandlerFor master) (AccountTree master)
 folderAccountTree (folderE@(Entity fId _), isDebit) = do
     -- Get child folders.
-    folders' <- selectList [FolderAccountParent ==. Just fId] []
+    folders' <- selectList [pkFolderAccountParentField ===. Just fId] []
     folders <- mapM (\f -> folderAccountTree (f, isDebit)) folders'
 
     -- Get child accounts.
-    accounts' <- selectList [AccountParent ==. fId] []
+    accounts' <- selectList [pkAccountParentField ===. fId] []
     accounts <- mapM (accountLeaf isDebit) accounts'
     
     let balance = sum $ map accountLeafBalance accounts ++ map folderNodeBalance folders
@@ -147,11 +147,11 @@ folderAccountTree (folderE@(Entity fId _), isDebit) = do
             return $ AccountLeaf accountE balance isDebit
 
         -- JP: Move to Import or Account?
-        queryAccountBalance :: MonadHandler m => AccountId master -> ReaderT SqlBackend m Nano
+        -- queryAccountBalance :: MonadHandler m => AccountId master -> ReaderT SqlBackend m Nano
         queryAccountBalance aId = do
             res <- E.select $ E.from $ \a -> do
-                E.where_ (a E.^. TransactionAccountAccount E.==. E.val aId)
-                return $ E.sum_ (a E.^. TransactionAccountAmount)
+                E.where_ (a E.^. pkTransactionAccountAccountField E.==. E.val aId)
+                return $ E.sum_ (a E.^. pkTransactionAccountAmountField)
             case res of
                 [E.Value (Just x)] -> return x
                 _ -> return 0

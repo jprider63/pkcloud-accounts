@@ -24,19 +24,26 @@ class (SubEntity (Book master), SubEntity (Account master), SubEntity (BookFolde
   pkAccountName :: Account master -> Text
   pkAccountDateCreated :: Account master -> UTCTime
   pkAccountParent :: Account master -> (FolderAccountId master)
+  pkAccountParentField :: EntityField (Account master) (FolderAccountId master)
   pkAccountShadow :: Account master -> Maybe (AccountId master)
   pkAccountFeatured :: Account master -> Bool
 
   type BookFolderAccount master = t | t -> master
+  pkBookFolderAccountIdField :: EntityField (BookFolderAccount master) (Key (BookFolderAccount master))
   pkBookFolderAccountBook :: BookFolderAccount master -> BookId master
+  pkBookFolderAccountBookField :: EntityField (BookFolderAccount master) (BookId master)
   pkBookFolderAccountFolder :: BookFolderAccount master -> FolderAccountId master
+  pkBookFolderAccountFolderField :: EntityField (BookFolderAccount master) (FolderAccountId master)
   pkBookFolderAccountIsDebit :: BookFolderAccount master -> Bool
+  pkBookFolderAccountIsDebitField :: EntityField (BookFolderAccount master) Bool
   pkBookFolderAccountUniqueBookFolder :: BookId master -> FolderAccountId master -> Unique (BookFolderAccount master)
   -- UniqueBookFolder book folder
 
   type FolderAccount master = t | t -> master
+  pkFolderAccountIdField :: EntityField (FolderAccount master) (Key (FolderAccount master))
   pkFolderAccountName :: FolderAccount master -> Text
   pkFolderAccountParent :: FolderAccount master -> Maybe (FolderAccountId master)
+  pkFolderAccountParentField :: EntityField (FolderAccount master) (Maybe (FolderAccountId master))
 
   type Transaction master = t | t -> master
   pkTransactionIdField :: EntityField (Transaction master) (Key (Transaction master))
@@ -51,7 +58,9 @@ class (SubEntity (Book master), SubEntity (Account master), SubEntity (BookFolde
   pkTransactionAccountIdField :: EntityField (TransactionAccount master) (Key (TransactionAccount master))
   pkTransactionAccountTransaction :: TransactionAccount master -> TransactionId master
   pkTransactionAccountAccount :: TransactionAccount master -> AccountId master
+  pkTransactionAccountAccountField :: EntityField (TransactionAccount master) (AccountId master)
   pkTransactionAccountAmount :: TransactionAccount master -> Nano
+  pkTransactionAccountAmountField :: EntityField (TransactionAccount master) Nano
 
   type FrequentTransaction master = t | t -> master
   pkFrequentTransactionBook :: FrequentTransaction master -> BookId master
