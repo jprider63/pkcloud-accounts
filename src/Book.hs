@@ -16,10 +16,10 @@ setLastOpened :: (PKCloudAccounts master, MonadHandler m, m ~ HandlerFor master)
 setLastOpened bookId = 
     setSessionBS _lastOpenedBookKey $ BSL.toStrict $ Aeson.encode bookId
 
-getLastOpened :: PKCloudAccounts master => HandlerFor master (Maybe (BookId master))
+getLastOpened :: forall master . PKCloudAccounts master => Handler master (Maybe (BookId master))
 getLastOpened = do
     -- Get current user.
-    userId <- requireAuthId
+    userId <- liftHandler requireAuthId
 
     -- Lookup latest book.
     bookIdM <- (>>= Aeson.decodeStrict) <$> lookupSessionBS _lastOpenedBookKey
@@ -27,7 +27,7 @@ getLastOpened = do
         Nothing ->
             return Nothing
         Just bookId -> do
-            book <- runDB $ get404 bookId
+            book <- liftHandler $ runDB $ get404 bookId
 
             -- Make sure user can read book.
             return $ if canViewBook userId book then
@@ -43,22 +43,24 @@ requireCanWriteBook book = do
 canViewBook :: PKCloudAccounts master => AuthId master -> Book master -> Bool
 canViewBook uId book = error "TODO: switch to pkcloud auth" -- pkBookCreatedBy book == uId
 
-layout :: PKCloudAccounts master => Breadcrumb master -> (Entity (Book master) -> [AccountTree master] -> WidgetFor master ()) -> BookId master -> HandlerFor master Html
+layout :: forall master . PKCloudAccounts master => Breadcrumb master -> (Entity (Book master) -> [AccountTree master] -> WidgetFor master ()) -> BookId master -> Handler master Html
 layout breadcrumb w bookId = do
     -- Check if user is authenticated.
     uId <- requireAuthId
     
     -- Lookup book.
-    book <- runDB $ get404 bookId
+    book <- liftHandler $ runDB $ get404 bookId
 
     -- Check if user can view book.
     unless (canViewBook uId book) $ 
         permissionDenied ""
 
-    accountTree <- accountTrees bookId
+    accountTree <- liftHandler $ accountTrees bookId
 
     let bookE = Entity bookId book
-    defaultLayout $ [whamlet|
+    -- TODO: pkcloudDefaultLayout?
+    -- liftHandler $ defaultLayout $ [whamlet|
+    liftHandler $ pkcloudDefaultLayout PKCloudAccountsApp title $ [whamlet|
             <div .container>
                 <div .row>
                     <div .col-sm-9>
@@ -74,7 +76,9 @@ layout breadcrumb w bookId = do
                 --             #{bookName book}
 
     where
+        title = error "TODO"
 
+        -- breadcrumbW :: [(Text, Route (PKCloudAccountsApp master))] -> WidgetFor master ()
         breadcrumbW [] = mempty
         breadcrumbW [(title, _)] = [whamlet|
             <li .active>
@@ -82,7 +86,7 @@ layout breadcrumb w bookId = do
           |]
         breadcrumbW ((title, link):bs) = [whamlet|
             <li>
-              <a href="@{link}">
+              <a href="@{toMasterRoute link}">
                 #{title}
           |] <> breadcrumbW bs
 
@@ -91,20 +95,23 @@ layout breadcrumb w bookId = do
         --     <li><a href="#">Library</a></li>
         --     <li class="active">Data</li>
         -- |]
-        -- sidebarW :: [AccountTree master] -> WidgetFor master ()
-        sidebarW trees = [whamlet|
+
+        sidebarW :: [AccountTree master] -> WidgetFor master ()
+        sidebarW trees = do
+          -- rtp <- getRouteToParent
+          [whamlet|
             <div .sidebar>
-                <a .btn .btn-primary .btn-block href="@{TransactionCreateR bookId}">
+                <a .btn .btn-primary .btn-block href="@{toMasterRoute (TransactionCreateR bookId)}">
                     New Transaction
-                <a href="@{AccountCreateR bookId}" .btn .btn-primary .btn-block>
+                <a href="@{toMasterRoute (AccountCreateR bookId)}" .btn .btn-primary .btn-block>
                     New Account
-                <a href="@{FolderCreateR bookId}" .btn .btn-primary .btn-block>
+                <a href="@{toMasterRoute (FolderCreateR bookId)}" .btn .btn-primary .btn-block>
                     New Folder
-                <a href="@{BookSettingsR bookId}" .btn .btn-default .btn-block>
+                <a href="@{toMasterRoute (BookSettingsR bookId)}" .btn .btn-default .btn-block>
                     Settings
-                <a href="@{BooksR}" .btn .btn-default .btn-block>
+                <a href="@{toMasterRoute (BooksR)}" .btn .btn-default .btn-block>
                     Other Books
-        |]
+          |]
         -- Book Settings?
                 -- <h2>
                 --     <a href="@{BookR bookId}">

@@ -4,8 +4,6 @@ import PKCloud.Import
 
 import PKCloud.Accounts.Import
 
-data PKCloudAccountsApp master = PKCloudAccountsApp
-
 mkYesodSubData "(PKCloudAccounts master) => PKCloudAccountsApp master" [parseRoutes|
 / HomeR GET
 

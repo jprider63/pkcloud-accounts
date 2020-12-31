@@ -4,13 +4,15 @@ import Data.Fixed (Nano)
 import Prelude (Bool, Maybe)
 import PKCloud.Import
 
+data PKCloudAccountsApp master = PKCloudAccountsApp
+
 type AccountId master = Key (Account master)
 type BookId master = Key (Book master)
 type FolderAccountId master = Key (FolderAccount master)
 type FrequentTransactionId master = Key (FrequentTransaction master)
 type TransactionId master = Key (Transaction master)
 
-class (SubEntity (Book master), SubEntity (Account master), SubEntity (BookFolderAccount master), SubEntity (FolderAccount master), SubEntity (Transaction master), SubEntity (TransactionAccount master), SubEntity (FrequentTransaction master), SubEntity (FrequentTransactionAccount master)) => PKCloudAccounts master where
+class (SubEntity (Book master), SubEntity (Account master), SubEntity (BookFolderAccount master), SubEntity (FolderAccount master), SubEntity (Transaction master), SubEntity (TransactionAccount master), SubEntity (FrequentTransaction master), SubEntity (FrequentTransactionAccount master), PKCloud master, ToMasterRoute (PKCloudAccountsApp master) master) => PKCloudAccounts master where
 
   type Book master = b | b -> master
   pkBook :: AuthId master -> Text -> UTCTime -> Book master

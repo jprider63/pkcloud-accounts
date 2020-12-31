@@ -6,6 +6,7 @@ module Breadcrumb (
 
 import           Import.NoFoundation (($), Entity(..), Text, Route)
 import qualified PKCloud.Accounts.Import as I
+import           PKCloud.Accounts.Import (PKCloudAccountsApp)
 import           PKCloud.Accounts.Routes
 
 data Breadcrumb master = 
