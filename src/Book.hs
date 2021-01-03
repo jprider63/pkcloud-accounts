@@ -7,6 +7,7 @@ import qualified Database.Esqueleto as E
 -- import qualified Account
 import           Breadcrumb (Breadcrumb, breadcrumbs)
 import           Import.NoFoundation
+import           PKCloud.Accounts.Core ()
 import           Types
 
 _lastOpenedBookKey :: Text
@@ -78,7 +79,7 @@ layout breadcrumb w bookId = do
     where
         title = error "TODO"
 
-        -- breadcrumbW :: [(Text, Route (PKCloudAccountsApp master))] -> WidgetFor master ()
+        breadcrumbW :: [(Text, Route (PKCloudAccountsApp master))] -> WidgetFor master ()
         breadcrumbW [] = mempty
         breadcrumbW [(title, _)] = [whamlet|
             <li .active>
@@ -99,6 +100,7 @@ layout breadcrumb w bookId = do
         sidebarW :: [AccountTree master] -> WidgetFor master ()
         sidebarW trees = do
           -- rtp <- getRouteToParent
+          let booksR = BooksR :: Route (PKCloudAccountsApp master)
           [whamlet|
             <div .sidebar>
                 <a .btn .btn-primary .btn-block href="@{toMasterRoute (TransactionCreateR bookId)}">
@@ -109,7 +111,7 @@ layout breadcrumb w bookId = do
                     New Folder
                 <a href="@{toMasterRoute (BookSettingsR bookId)}" .btn .btn-default .btn-block>
                     Settings
-                <a href="@{toMasterRoute (BooksR)}" .btn .btn-default .btn-block>
+                <a href="@{toMasterRoute booksR}" .btn .btn-default .btn-block>
                     Other Books
           |]
         -- Book Settings?
