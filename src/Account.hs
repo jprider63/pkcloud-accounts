@@ -9,17 +9,17 @@ import           Types.Classes
 
 -- TODO: Cache this, make a map, or run DB queries? Change type of account tree to be Map (Either FolderId AccountId) (Either Folder Debit, Bool)?? Then use recursive CTE query for folders/accounts?
 -- Throws permission denied if account isn't in the book's account tree.
-isDebit :: MonadHandler m => [AccountTree] -> AccountId -> m Bool
+isDebit :: (PKCloudAccounts master, MonadHandler m) => [AccountTree master] -> AccountId master -> m Bool
 isDebit ts aId = (\(_,_,x) -> x) <$> leaf ts aId
 
-toAccountIds :: [AccountTree] -> [AccountId]
+toAccountIds :: [AccountTree master] -> [AccountId master]
 toAccountIds = concatMap helper
     where
-        helper :: AccountTree -> [AccountId]
+        helper :: AccountTree master -> [AccountId master]
         helper (AccountLeaf (Entity aId _) _ _) = [aId]
         helper (FolderNode _ _ _ c) = toAccountIds c
 
-leaf :: MonadHandler m => [AccountTree] -> AccountId -> m (Entity Account, Nano, Bool)
+leaf :: (PKCloudAccounts master, MonadHandler m) => [AccountTree master] -> AccountId  master-> m (Entity (Account master), Nano, Bool)
 leaf ts aId = case getAccountNode ts aId of
     Nothing ->
         permissionDenied ""
@@ -29,15 +29,15 @@ leaf ts aId = case getAccountNode ts aId of
         permissionDenied "Unreachable"
 
 
-requireAllInBook :: MonadHandler m => [AccountTree] -> [AccountId] -> m ()
+requireAllInBook :: (PKCloudAccounts master, MonadHandler m) => [AccountTree master] -> [AccountId master] -> m ()
 requireAllInBook accountTree = mapM_ $ requireInBook accountTree
 
-requireInBook :: MonadHandler m => [AccountTree] -> AccountId -> m ()
+requireInBook :: (PKCloudAccounts master, MonadHandler m) => [AccountTree master] -> AccountId master -> m ()
 requireInBook accountTree aId = 
     unless (isInBook accountTree aId) $
         permissionDenied ""
 
-isInBook :: [AccountTree] -> AccountId -> Bool
+isInBook :: PKCloudAccounts master => [AccountTree master] -> AccountId master -> Bool
 isInBook a = maybe False (const True) . getAccountNode a
 
 amountToDebit :: Bool  -- | If account is debit.
@@ -53,26 +53,26 @@ amountToCredit True x | x < 0 = Just $ negate x
 amountToCredit False x | x >= 0 = Just x
 amountToCredit _ _ = Nothing
 
-requireFolder :: MonadHandler m => [AccountTree] -> FolderAccountId -> m AccountTree
+requireFolder :: (PKCloudAccounts master, MonadHandler m) => [AccountTree master] -> FolderAccountId master -> m (AccountTree master)
 requireFolder a f = case getFolderNode a f of
     Just x -> return x
     Nothing -> permissionDenied ""
 
-getFolderNode :: [AccountTree] -> FolderAccountId -> Maybe AccountTree
+getFolderNode :: PKCloudAccounts master => [AccountTree master] -> FolderAccountId  master-> Maybe (AccountTree master)
 getFolderNode [] _ = Nothing
 getFolderNode (node@(FolderNode (Entity fId' _) _ _ _):ts) fId | fId == fId' = Just node
 getFolderNode ((FolderNode _ _ _ children):ts) fId = getFolderNode (children ++ ts) fId
 getFolderNode ((AccountLeaf _ _ _):ts) fId = getFolderNode ts fId
 
-getAccountNode :: [AccountTree] -> AccountId -> Maybe AccountTree
+getAccountNode :: PKCloudAccounts master => [AccountTree master] -> AccountId master -> Maybe (AccountTree master)
 getAccountNode [] aId = Nothing
 getAccountNode ((leaf@(AccountLeaf (Entity aId' _) _ _)):ts) aId | aId == aId' = Just leaf
 getAccountNode ((AccountLeaf _ _ _):ts) aId = getAccountNode ts aId
 getAccountNode ((FolderNode _ _ _ children):ts) aId = getAccountNode (children ++ ts) aId
 
-layout :: (Entity Account -> Breadcrumb.CRUD Account) -> (Entity Book -> Entity Account -> Bool -> [AccountTree] -> Widget) -> BookId -> AccountId -> Handler Html
+layout :: forall master . PKCloudAccounts master => (Entity (Account master) -> Breadcrumb.CRUD (Account master)) -> (Entity (Book master) -> Entity (Account master) -> Bool -> [AccountTree master] -> WidgetFor master ()) -> BookId master -> AccountId master -> Handler master Html
 layout bc f bookId accountId = do
-    account <- runDB $ get404 accountId
+    account <- liftHandler $ runDB $ get404 accountId
 
     let accountE = Entity accountId account
     Book.layout (Breadcrumb.Account $ bc accountE) (w accountE) bookId
@@ -89,10 +89,10 @@ layout bc f bookId accountId = do
             -- CPS for widget.
             f bookE accountE accountIsDebit accountTree
 
-displayTransactionRow :: (GeneralizedTransactionAccount ta) => [AccountTree] -> BookId -> [((Maybe (Entity Transaction)), Entity ta, E.Value (Maybe Nano))] -> Widget
+displayTransactionRow :: (PKCloudAccounts master, GeneralizedTransactionAccount ta) => [AccountTree master] -> BookId master -> [((Maybe (Entity (Transaction master))), Entity ta, E.Value (Maybe Nano))] -> Widget master ()
 displayTransactionRow a b x = displayTransactionRow' a b True x
 
-displayTransactionRow' :: (GeneralizedTransactionAccount ta) => [AccountTree] -> BookId -> Bool -> [(Maybe (Entity Transaction), Entity ta, E.Value (Maybe Nano))] -> Widget
+displayTransactionRow' :: (PKCloudAccounts master, GeneralizedTransactionAccount ta) => [AccountTree master] -> BookId master -> Bool -> [(Maybe (Entity (Transaction master)), Entity ta, E.Value (Maybe Nano))] -> Widget master ()
 displayTransactionRow' _ _ _ [] = mempty -- "No transactions"??
 displayTransactionRow' accountTree bookId showAccountName (first:rest) = 
     let f = displayRow accountTree bookId in
@@ -118,7 +118,7 @@ displayTransactionRow' accountTree bookId showAccountName (first:rest) =
                         [whamlet|
                             <td>
                                 <a href="@{AccountR bookId aId}">
-                                    #{accountName a}
+                                    #{pkAccountName a}
                         |]
                     else
                         mempty
@@ -130,13 +130,13 @@ displayTransactionRow' accountTree bookId showAccountName (first:rest) =
                         if isFirst then [whamlet|
                             <td>
                                 <a href="@{TransactionR bookId tId}">
-                                    #{transactionDescription t}
+                                    #{pkTransactionDescription t}
                           |]
                         else [whamlet|
                             <td>
                           |]
 
-                date = case (transactionDate . entityVal) <$> transactionM of
+                date = case (pkTransactionDate . entityVal) <$> transactionM of
                     Nothing -> 
                         mempty
                     Just d -> 
@@ -155,7 +155,7 @@ displayTransactionRow' accountTree bookId showAccountName (first:rest) =
                   |]) balanceM
 
 -- Converts list of (abstract) transactions to entries for entries field.
-transactionsToEntries :: GeneralizedTransactionAccount ta => [AccountTree] -> [Entity ta] -> Handler [(Key Account, Either Nano Nano)]
+transactionsToEntries :: (PKCloudAccounts master, GeneralizedTransactionAccount ta) => [AccountTree master] -> [Entity ta] -> Handler master [(Key (Account master), Either Nano Nano)]
 transactionsToEntries trees = mapM $ \(Entity _ ta) -> do
     -- Get account type.
     let taa = gTransactionAccountAccount ta

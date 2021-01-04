@@ -3,10 +3,13 @@ module Import
     ) where
 
 import qualified Data.Aeson as Aeson
+import           Data.Bifunctor (second)
 import qualified Data.Map as Map
 import qualified Data.Text.Lazy.Builder as TB
 import qualified Data.Text.Read as TR
+import           Data.Time.Clock (UTCTime(..), utctDay)
 import qualified Database.Esqueleto as E
+import qualified Database.Persist as P
 import           Import.NoFoundation   as Import
 import           Text.Blaze
 import           Text.Blaze.Html.Renderer.String (renderHtml)
@@ -323,15 +326,15 @@ bootstrapRadioFieldList l = (radioFieldList l) -- radioField $ optionsPairs l
 dateField :: (Monad m, RenderMessage (HandlerSite m) FormMessage) => Field m UTCTime
 dateField = convertField (\d -> UTCTime d 0) utctDay dayField 
 
-transactionQuery :: E.SqlQuery (E.SqlExpr (Entity Transaction), E.SqlExpr (Entity TransactionAccount), E.SqlExpr (E.Alias (E.Value (Maybe Nano))))
+transactionQuery :: PKCloudAccounts master => E.SqlQuery (E.SqlExpr (Entity (Transaction master)), E.SqlExpr (Entity (TransactionAccount master)), E.SqlExpr (E.Alias (E.Value (Maybe Nano))))
 transactionQuery = E.from $ \(t `E.InnerJoin` ta) -> do
-    E.on (t E.^. TransactionId E.==. ta E.^. TransactionAccountTransaction)
-    E.orderBy [E.desc (t E.^. TransactionDate), E.desc (t E.^. TransactionId)]
-    E.groupBy (t E.^. TransactionId, ta E.^. TransactionAccountId)
-    s <- E.as $ E.over (E.sum_ (ta E.^. TransactionAccountAmount)) (Just $ ta E.^. TransactionAccountAccount) [E.asc (t E.^. TransactionDate), E.asc (t E.^. TransactionId)]
+    E.on (t E.^. pkTransactionIdField E.==. ta E.^. pkTransactionAccountTransactionField)
+    E.orderBy [E.desc (t E.^. pkTransactionDateField), E.desc (t E.^. pkTransactionIdField)]
+    E.groupBy (t E.^. pkTransactionIdField, ta E.^. pkTransactionAccountIdField)
+    s <- E.as $ E.over (E.sum_ (ta E.^. pkTransactionAccountAmountField)) (Just $ ta E.^. pkTransactionAccountAccountField) [E.asc (t E.^. pkTransactionDateField), E.asc (t E.^. pkTransactionIdField)]
     return (t, ta, s)
 
-entriesField :: forall m a . (ToBackendKey SqlBackend a, SubHandlerFor (PKCloudAccountsApp master) master ~ m, RenderMessage (PKCloudAccountsApp master) Text, a ~ (Account Master)) => [(Text, Key a)] -> [(Key a, Key a)] -> Field m [(Key a, Either Nano Nano)]
+entriesField :: forall master m a . (ToBackendKey SqlBackend a, SubHandlerFor (PKCloudAccountsApp master) master ~ m, RenderMessage (PKCloudAccountsApp master) Text, a ~ (Account master)) => [(Text, Key a)] -> [(Key a, Key a)] -> Field m [(Key a, Either Nano Nano)]
 -- entriesField :: forall m a . (ToBackendKey SqlBackend a, HandlerT App IO ~ m, RenderMessage App Text) => [(Text, Key a)] -> Field m [(Entity a, Either Nano Nano)]
 entriesField accounts shadows' = -- checkMMap toEntity (map toKey) $ 
     Field parse view UrlEncoded
@@ -600,7 +603,7 @@ entriesField accounts shadows' = -- checkMMap toEntity (map toKey) $
                             -- <div .btn-group role="group">
                         -- <div .input-group>
 
-            accountsH :: Maybe AccountId -> Html
+            accountsH :: Maybe (AccountId master) -> Html
             accountsH accountIdM = 
                 let accountV = maybe mempty (toMarkup . fromSqlKey) accountIdM in
                 [shamlet|$newline never
@@ -642,22 +645,22 @@ selectFieldKeys = selectField . optionsPersistKey
         }) pairs
 
 -- TODO drop entriesId XXX
-frequentTransationField :: forall master m a . (ToBackendKey SqlBackend a, SubHandlerFor (PKCloudAccountsApp master) master ~ m, RenderMessage (PKCloudAccountsApp master) Text, a ~ (FrequentTransaction master)) => [AccountTree] -> Key Book -> Text -> Text -> m (Field m (Key a))
+-- frequentTransationField :: forall master m a . (ToBackendKey SqlBackend a, SubHandlerFor (PKCloudAccountsApp master) master ~ m, RenderMessage (PKCloudAccountsApp master) Text, a ~ (FrequentTransaction master)) => [AccountTree master] -> Key (Book master) -> Text -> Text -> m (Field m (Key a))
 frequentTransationField trees bookId descriptionId entriesId = runDB $ do
-  fts <- selectList [FrequentTransactionBook ==. bookId] []
+  fts <- selectList [pkFrequentTransactionBookField P.==. bookId] []
 
   ftas <- Map.fromList <$> mapM (\(Entity eId e) -> do
-      ftas <- selectList [FrequentTransactionAccountTransaction ==. eId] []
+      ftas <- selectList [pkFrequentTransactionAccountTransactionField P.==. eId] []
 
       entries <- fmap (\(aId, v) -> case v of
           Left d -> (aId, d, 0)
           Right c -> (aId, 0, c)
         ) <$> lift (Account.transactionsToEntries trees ftas)
 
-      return (fromSqlKey eId, Aeson.object ["description" .= frequentTransactionDescription e, "entries" .= entries])
+      return (fromSqlKey eId, Aeson.object ["description" .= pkFrequentTransactionDescription e, "entries" .= entries])
     ) fts
 
-  let field = selectFieldKeys $ map (\(Entity eId e) -> (frequentTransactionDescription e, eId)) fts
+  let field = selectFieldKeys $ map (\(Entity eId e) -> (pkFrequentTransactionDescription e, eId)) fts
 
   return $ field { fieldView = view field ftas }
 
