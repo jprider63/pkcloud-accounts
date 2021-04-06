@@ -1,15 +1,17 @@
 module PKCloud.Accounts.Handler.Transactions where
 
 import qualified Database.Esqueleto as E
+import qualified Data.List as List
 
 import qualified Account
 import qualified Book
 import qualified Breadcrumb
 import           Import
+import           Types.Classes
 
-getTransactionsR :: BookId -> Handler Html
+getTransactionsR :: forall master . (PKCloudAccounts master, GeneralizedTransactionAccount (TransactionAccount master)) => BookId master -> Handler master Html
 getTransactionsR = Book.layout Breadcrumb.Transactions $ \(Entity bookId book) accountTree -> do
-    setTitle $ toHtml ("Transactions" :: Text)
+    pkcloudSetTitle $ toHtml ("Transactions" :: Text)
 
     -- TODO: Filters by date, ...
 
@@ -21,15 +23,15 @@ getTransactionsR = Book.layout Breadcrumb.Transactions $ \(Entity bookId book) a
     |]
 
   where
-    transactionsW :: [AccountTree] -> BookId -> Widget
+    transactionsW :: [AccountTree master] -> BookId master -> WidgetFor master ()
     transactionsW accountTree bookId = do
-      ts' <- handlerToWidget $ runDB $ E.select $ E.fromSubSelect transactionQuery $ \(t, ta, s) -> do
-        E.where_ (ta E.^. TransactionAccountAccount `E.in_` E.valList (Account.toAccountIds accountTree))
+      ts' <- handlerToWidget $ liftHandler $ runDB $ E.select $ E.fromSubSelect transactionQuery $ \(t, ta, s) -> do
+        E.where_ (ta E.^. pkTransactionAccountAccountField `E.in_` E.valList (Account.toAccountIds accountTree))
         return (t, ta, E.fromAlias s)
 
       -- Mark if we should display the description.
       -- TODO: Is there a faster way? XXX
-      let ts = groupBy (\((Just (Entity a _)),_,_) ((Just (Entity b _)),_,_) -> a == b) $ map justFirst3 ts'
+      let ts = List.groupBy (\((Just (Entity a _)),_,_) ((Just (Entity b _)),_,_) -> a == b) $ map justFirst3 ts'
 
       [whamlet|
           <table .table .table-condensed>
@@ -46,6 +48,6 @@ getTransactionsR = Book.layout Breadcrumb.Transactions $ \(Entity bookId book) a
                       Credit
                   <th>
                       Balance
-              ^{concatMap (Account.displayTransactionRow accountTree bookId . reverse) ts}
+              ^{mconcat (map (Account.displayTransactionRow accountTree bookId . reverse) ts)}
       |]
 

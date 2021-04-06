@@ -89,10 +89,10 @@ layout bc f bookId accountId = do
             -- CPS for widget.
             f bookE accountE accountIsDebit accountTree
 
-displayTransactionRow :: (PKCloudAccounts master, GeneralizedTransactionAccount ta) => [AccountTree master] -> BookId master -> [((Maybe (Entity (Transaction master))), Entity ta, E.Value (Maybe Nano))] -> Widget master ()
+displayTransactionRow :: (PKCloudAccounts master, GeneralizedTransactionAccount ta) => [AccountTree master] -> BookId master -> [((Maybe (Entity (Transaction master))), Entity ta, E.Value (Maybe Nano))] -> WidgetFor master () -- WidgetFor (PKCloudAccountsApp master) () 
 displayTransactionRow a b x = displayTransactionRow' a b True x
 
-displayTransactionRow' :: (PKCloudAccounts master, GeneralizedTransactionAccount ta) => [AccountTree master] -> BookId master -> Bool -> [(Maybe (Entity (Transaction master)), Entity ta, E.Value (Maybe Nano))] -> Widget master ()
+displayTransactionRow' :: (PKCloudAccounts master, GeneralizedTransactionAccount ta) => [AccountTree master] -> BookId master -> Bool -> [(Maybe (Entity (Transaction master)), Entity ta, E.Value (Maybe Nano))] -> WidgetFor master () -- WidgetFor (PKCloudAccountsApp master) () -- Widget master ()
 displayTransactionRow' _ _ _ [] = mempty -- "No transactions"??
 displayTransactionRow' accountTree bookId showAccountName (first:rest) = 
     let f = displayRow accountTree bookId in
@@ -117,7 +117,7 @@ displayTransactionRow' accountTree bookId showAccountName (first:rest) =
                 account aId a = if showAccountName then
                         [whamlet|
                             <td>
-                                <a href="@{AccountR bookId aId}">
+                                <a href="@{toMasterRoute (AccountR bookId aId)}">
                                     #{pkAccountName a}
                         |]
                     else
@@ -129,7 +129,7 @@ displayTransactionRow' accountTree bookId showAccountName (first:rest) =
                     Just (Entity tId t) ->
                         if isFirst then [whamlet|
                             <td>
-                                <a href="@{TransactionR bookId tId}">
+                                <a href="@{toMasterRoute (TransactionR bookId tId)}">
                                     #{pkTransactionDescription t}
                           |]
                         else [whamlet|
