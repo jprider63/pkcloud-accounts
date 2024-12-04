@@ -36,13 +36,15 @@ resolver: lts-12.2 # lts-10.6 # lts-12.2 # lts-9.2
 # non-dependency (i.e. a user package), and its test suites and benchmarks
 # will not be run. This is useful for tweaking upstream packages.
 packages:
-- ../esqueleto
 - .
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
 
-
+- git: https://github.com/pkauth/pkcloud-core
+  commit: 651085810ee3f870dade9702d7963dd0759ab808
+- git: https://github.com/jprider63/esqueleto.git
+  commit: 18b933532aee3cac98583a77501b1458acbbaceb
         # - persistent-2.8.1
         # - persistent-mysql-2.8.1
         # - persistent-postgresql-2.8.1
